@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>커뮤니티 — 北CINEMA</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #1a1209; --paper: #faf7f2; --cream: #f5f0e8;
+      --gold: #c9a84c; --gold-light: #e8c96a; --muted: #8a7560;
+      --border: #d4c9b8; --card-bg: #fffdf9;
+      --shadow: 0 2px 16px rgba(26,18,9,0.10);
+    }
+    body { font-family: 'Georgia', 'Batang', serif; background: var(--paper); color: var(--ink); line-height: 1.7; }
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(250,247,242,0.96); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 58px; }
+    .nav-logo { font-size: 1.15rem; font-weight: 700; letter-spacing: 2px; color: var(--ink); text-decoration: none; }
+    .nav-logo span { color: var(--gold); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { font-size: 0.82rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--gold); }
+
+    .page-hero { background: var(--cream); border-bottom: 1px solid var(--border); padding: 3rem 2.5rem; text-align: center; }
+    .page-hero .tag { font-size: 0.72rem; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 0.5rem; }
+    .page-hero h1 { font-size: clamp(1.6rem, 3.5vw, 2.6rem); font-weight: 400; color: var(--ink); }
+    .page-hero p { font-size: 0.9rem; color: var(--muted); margin-top: 0.5rem; }
+
+    .community-container { max-width: 1100px; margin: 0 auto; padding: 3rem 1.5rem; }
+    .community-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2.5rem; }
+    @media(max-width: 768px) { .community-grid { grid-template-columns: 1fr; } }
+
+    .board-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem; }
+    .board-header h3 { font-size: 1rem; color: var(--ink); }
+    .btn-write { background: var(--ink); color: var(--paper); border: none; border-radius: 4px; padding: 0.45rem 1.1rem; font-size: 0.82rem; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .btn-write:hover { background: var(--gold); color: var(--ink); }
+
+    #posts-list { display: flex; flex-direction: column; gap: 0.7rem; }
+    .post-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; transition: border-color 0.2s; }
+    .post-item:hover { border-color: var(--gold); }
+    .post-item-left { flex: 1; min-width: 0; }
+    .post-title { font-size: 0.9rem; color: var(--ink); font-weight: 600; cursor: pointer; }
+    .post-title:hover { color: var(--gold); }
+    .post-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+    .post-content-preview { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px; }
+    .post-delete-btn { background: none; border: 1px solid #e8b8b8; border-radius: 16px; padding: 0.25rem 0.7rem; font-size: 0.72rem; cursor: pointer; color: #c44; white-space: nowrap; transition: all 0.2s; font-family: inherit; flex-shrink: 0; }
+    .post-delete-btn:hover { background: #ffe8e8; border-color: #c44; }
+
+    .sidebar-widget { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem; margin-bottom: 1.5rem; }
+    .sidebar-widget h4 { font-size: 0.88rem; color: var(--ink); margin-bottom: 0.8rem; border-bottom: 1px solid var(--border); padding-bottom: 0.6rem; }
+    .notice-item { font-size: 0.82rem; color: var(--muted); padding: 0.45rem 0; border-bottom: 1px solid var(--border); display: flex; gap: 0.4rem; }
+    .notice-item:last-child { border-bottom: none; }
+    .popular-item { display: flex; gap: 0.6rem; align-items: center; padding: 0.4rem 0; border-bottom: 1px solid var(--border); }
+    .popular-item:last-child { border-bottom: none; }
+    .popular-rank { font-size: 0.75rem; font-weight: 700; color: var(--gold); width: 18px; }
+    .popular-info { flex: 1; min-width: 0; }
+    .popular-title { font-size: 0.82rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .popular-likes { font-size: 0.72rem; color: var(--muted); }
+
+    .loading { text-align: center; padding: 3rem; color: var(--muted); }
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); font-size: 0.88rem; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 500; background: rgba(26,18,9,0.7); align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--card-bg); border-radius: 14px; padding: 2rem; max-width: 520px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 8px 40px rgba(0,0,0,0.3); }
+    .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--muted); }
+    .modal h3 { font-size: 1.1rem; margin-bottom: 1.2rem; color: var(--ink); }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .form-group input, .form-group textarea { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.9rem; background: var(--paper); color: var(--ink); outline: none; transition: border-color 0.2s; }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--gold); }
+    .form-group textarea { resize: vertical; min-height: 120px; }
+    .form-submit { width: 100%; background: var(--ink); color: var(--paper); border: none; border-radius: 6px; padding: 0.8rem; font-size: 0.9rem; cursor: pointer; font-family: inherit; transition: background 0.2s; margin-top: 0.5rem; }
+    .form-submit:hover { background: var(--gold); color: var(--ink); }
+
+    footer { background: var(--ink); color: rgba(250,247,242,0.55); text-align: center; padding: 2rem 1.5rem; font-size: 0.8rem; }
+    footer strong { color: var(--gold); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">北<span>CINEMA</span></a>
+  <ul class="nav-links">
+    <li><a href="guide/step1.html">AI 영상 만들기</a></li>
+    <li><a href="gallery.html">갤러리</a></li>
+    <li><a href="community.html" class="active">커뮤니티</a></li>
+  </ul>
+</nav>
+
+<div class="page-hero">
+  <span class="tag">Community</span>
+  <h1>💬 커뮤니티</h1>
+  <p>제작 팁, 질문, 작품 이야기를 멤버들과 함께 나눠요</p>
+</div>
+
+<div class="community-container">
+  <div class="community-grid">
+    <!-- 게시판 -->
+    <div>
+      <div class="board-header">
+        <h3>📌 게시판</h3>
+        <button class="btn-write" onclick="openPostModal()">✏️ 글쓰기</button>
+      </div>
+      <div id="posts-list"><div class="loading">⏳ 불러오는 중...</div></div>
+    </div>
+
+    <!-- 사이드바 -->
+    <div>
+      <div class="sidebar-widget">
+        <h4>🔥 인기 작품 TOP 3</h4>
+        <div id="popular-list"><div class="loading" style="padding:1rem 0;font-size:0.8rem;">불러오는 중...</div></div>
+      </div>
+      <div class="sidebar-widget">
+        <h4>📢 공지사항</h4>
+        <div class="notice-item">🎉 북시네마 커뮤니티 오픈!</div>
+        <div class="notice-item">📌 저작권 원칙을 지켜주세요.</div>
+        <div class="notice-item">📌 AI 생성 영상임을 명시해주세요.</div>
+        <div class="notice-item">💡 제작 팁은 자유롭게 공유해요!</div>
+      </div>
+      <div class="sidebar-widget">
+        <h4>🎬 바로가기</h4>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.3rem;">
+          <a href="guide/step1.html" style="font-size:0.82rem;color:var(--gold);text-decoration:none;">→ AI 영상 만들기 가이드</a>
+          <a href="gallery.html" style="font-size:0.82rem;color:var(--gold);text-decoration:none;">→ 작품 갤러리 보기</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- POST MODAL -->
+<div class="modal-overlay" id="post-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closePostModal()">✕</button>
+    <h3>✏️ 글쓰기</h3>
+    <div class="form-group"><label>제목 *</label><input type="text" id="p-title" placeholder="제목을 입력하세요"></div>
+    <div class="form-group"><label>내용 *</label><textarea id="p-content" placeholder="내용을 입력하세요"></textarea></div>
+    <div class="form-group"><label>닉네임</label><input type="text" id="p-author" placeholder="ex) 책읽는고양이"></div>
+    <button class="form-submit" onclick="submitPost()">게시하기</button>
+  </div>
+</div>
+
+<footer>
+  <strong>北CINEMA</strong> · 커뮤니티<br>
+  <span style="opacity:0.5;font-size:0.75rem;">© 2025 Book to AI Video Community</span>
+</footer>
+
+<script>
+  const { createClient } = supabase;
+  const sb = createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_ANON_KEY');
+
+  async function loadPosts() {
+    const { data, error } = await sb.from('posts').select('*').order('created_at', { ascending: false }).limit(30);
+    const el = document.getElementById('posts-list');
+    if (error || !data) {
+      el.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;padding:1rem 0;">게시판을 불러올 수 없습니다.</p>';
+      return;
+    }
+    if (!data.length) {
+      el.innerHTML = '<div class="empty-state">첫 번째 글을 작성해보세요! ✍️</div>';
+      return;
+    }
+    el.innerHTML = data.map(p => `
+      <div class="post-item" id="pi-${p.id}">
+        <div class="post-item-left">
+          <div class="post-title">${p.title||'(제목 없음)'}</div>
+          ${p.content ? `<div class="post-content-preview">${p.content}</div>` : ''}
+          <div class="post-meta">@${p.author||'익명'} · ${new Date(p.created_at).toLocaleDateString('ko-KR')}</div>
+        </div>
+        <button class="post-delete-btn" onclick="deletePost('${p.id}')">🗑️ 삭제</button>
+      </div>`).join('');
+  }
+
+  async function deletePost(id) {
+    if (!confirm('이 게시글을 삭제하시겠습니까?')) return;
+    const { error } = await sb.from('posts').delete().eq('id', id);
+    if (error) { alert('삭제 실패: ' + error.message); return; }
+    alert('삭제되었습니다.');
+    loadPosts();
+  }
+
+  async function loadPopular() {
+    const { data } = await sb.from('videos').select('id, book, author, likes').order('likes', { ascending: false }).limit(3);
+    const el = document.getElementById('popular-list');
+    if (!data || !data.length) { el.innerHTML = '<p style="font-size:0.8rem;color:var(--muted);">아직 작품이 없어요.</p>'; return; }
+    el.innerHTML = data.map((v, i) => `
+      <div class="popular-item">
+        <span class="popular-rank">${i+1}</span>
+        <div class="popular-info">
+          <div class="popular-title">${v.book||'무제'}</div>
+          <div class="popular-likes">❤️ ${v.likes||0}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  function openPostModal() { document.getElementById('post-modal').classList.add('open'); }
+  function closePostModal() { document.getElementById('post-modal').classList.remove('open'); }
+
+  async function submitPost() {
+    const title = document.getElementById('p-title').value.trim();
+    const content = document.getElementById('p-content').value.trim();
+    const author = document.getElementById('p-author').value.trim() || '익명';
+    if (!title) { alert('제목을 입력해주세요.'); return; }
+    const { error } = await sb.from('posts').insert([{ title, content, author }]);
+    if (error) { alert('게시 실패: ' + error.message); return; }
+    alert('게시되었습니다! ✅');
+    closePostModal();
+    loadPosts();
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  });
+
+  loadPosts();
+  loadPopular();
+</script>
+</body>
+</html>
