@@ -1,987 +1,1194 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>북시네마 | Book to AI Video</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>北CINEMA · Book to AI Video</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ─── RESET & BASE ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #1a1209;
+      --paper: #faf7f2;
+      --cream: #f5f0e8;
+      --gold: #c9a84c;
+      --gold-light: #e8c96a;
+      --rust: #8b3a2a;
+      --sage: #4a6741;
+      --muted: #8a7560;
+      --border: #d4c9b8;
+      --card-bg: #fffdf9;
+      --shadow: 0 2px 16px rgba(26,18,9,0.10);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Georgia', 'Batang', serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.7;
+    }
 
-  :root {
-    --main: #2C3E50;
-    --point: #E8A87C;
-    --bg: #FDF6EC;
-    --card: #FFFFFF;
-    --text: #2C3E50;
-    --sub: #7F8C8D;
-    --border: #E8DDD0;
-    --shadow: rgba(44, 62, 80, 0.1);
-  }
+    /* ─── NAV ─── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(250,247,242,0.96);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; height: 56px;
+    }
+    .nav-logo {
+      font-size: 1.1rem; font-weight: 700; letter-spacing: 2px;
+      color: var(--ink); text-decoration: none;
+    }
+    .nav-logo span { color: var(--gold); }
+    .nav-links { display: flex; gap: 1.8rem; list-style: none; }
+    .nav-links a {
+      font-size: 0.82rem; letter-spacing: 1px; text-transform: uppercase;
+      color: var(--muted); text-decoration: none; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--gold); }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 92vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 4rem 1.5rem 3rem;
+      background: linear-gradient(160deg, #faf7f2 60%, #f0e8d8 100%);
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c9a84c' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-badge {
+      display: inline-block; font-size: 0.72rem; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--gold); border: 1px solid var(--gold);
+      padding: 4px 14px; border-radius: 20px; margin-bottom: 1.4rem;
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 400; line-height: 1.25;
+      color: var(--ink); margin-bottom: 1rem;
+    }
+    .hero h1 em { color: var(--gold); font-style: italic; }
+    .hero p {
+      font-size: 1.05rem; color: var(--muted); max-width: 480px;
+      margin: 0 auto 2rem;
+    }
+    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .btn {
+      display: inline-block; padding: 0.7rem 1.6rem;
+      font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;
+      border-radius: 4px; cursor: pointer; transition: all 0.2s;
+      text-decoration: none; border: none; font-family: inherit;
+    }
+    .btn-primary {
+      background: var(--ink); color: var(--paper);
+    }
+    .btn-primary:hover { background: var(--gold); color: var(--ink); }
+    .btn-outline {
+      background: transparent; color: var(--ink); border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
 
-  /* HEADER */
-  header {
-    background: var(--main); padding: 0 40px;
-    display: flex; align-items: center; justify-content: space-between;
-    height: 70px; position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 2px 20px rgba(0,0,0,0.2);
-  }
-  .logo { font-family: 'Noto Serif KR', serif; font-size: 22px; font-weight: 700; color: var(--point); letter-spacing: 1px; cursor: pointer; }
-  .logo span { color: #fff; font-weight: 400; font-size: 14px; margin-left: 8px; opacity: 0.8; }
-  nav { display: flex; gap: 8px; }
-  nav button { background: none; border: none; color: rgba(255,255,255,0.7); font-family: 'Noto Sans KR', sans-serif; font-size: 14px; padding: 8px 16px; border-radius: 20px; cursor: pointer; transition: all 0.2s; }
-  nav button:hover, nav button.active { background: rgba(232,168,124,0.2); color: var(--point); }
+    /* ─── HERO AI INTRO (NEW) ─── */
+    .hero-ai-intro {
+      margin-top: 3.5rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem 2.5rem;
+      max-width: 820px;
+      width: 100%;
+      text-align: left;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+    .hero-ai-intro h3 {
+      font-size: 1.05rem; font-weight: 700; color: var(--ink);
+      margin-bottom: 1.2rem; letter-spacing: 0.5px;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .pipeline-mini {
+      display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;
+    }
+    .pipeline-mini-step {
+      display: flex; align-items: center; gap: 0.4rem;
+      background: var(--cream); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.55rem 0.9rem;
+      font-size: 0.82rem; color: var(--ink); font-family: inherit;
+    }
+    .pipeline-mini-step .step-num {
+      background: var(--gold); color: #fff;
+      width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+    }
+    .pipeline-mini-arrow {
+      color: var(--gold); font-size: 1rem; flex-shrink: 0;
+    }
+    .pipeline-mini-desc {
+      margin-top: 1rem; font-size: 0.88rem; color: var(--muted);
+      line-height: 1.6;
+    }
+    .hero-ai-image {
+      margin-top: 1.5rem;
+      width: 100%; border-radius: 8px; overflow: hidden;
+      border: 1px solid var(--border);
+      background: linear-gradient(135deg, #1a1209 0%, #3d2b1f 40%, #c9a84c 100%);
+      height: 160px; display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .hero-ai-image-label {
+      color: rgba(255,255,255,0.85); font-size: 0.9rem;
+      letter-spacing: 2px; text-transform: uppercase; z-index: 1;
+    }
+    .film-strip {
+      display: flex; gap: 8px; position: absolute; bottom: 12px; left: 12px; right: 12px;
+      overflow: hidden;
+    }
+    .film-frame {
+      width: 60px; height: 40px; flex-shrink: 0;
+      border-radius: 3px; border: 2px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
 
-  /* SECTIONS */
-  .section { display: none; }
-  .section.active { display: block; }
+    /* ─── STATS ─── */
+    .stats {
+      display: flex; justify-content: center; gap: 3rem;
+      flex-wrap: wrap; padding: 2.5rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--cream);
+    }
+    .stat-item { text-align: center; }
+    .stat-num {
+      font-size: 1.8rem; font-weight: 700; color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-label { font-size: 0.78rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
 
-  /* HERO */
-  .hero {
-    background: linear-gradient(135deg, var(--main) 0%, #3D5166 60%, #4A6278 100%);
-    padding: 80px 40px; text-align: center; position: relative; overflow: hidden;
-  }
-  .hero::before { content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%; background: radial-gradient(circle, rgba(232,168,124,0.08) 0%, transparent 60%); pointer-events:none; }
-  .hero-tag { display:inline-block; background:rgba(232,168,124,0.2); border:1px solid rgba(232,168,124,0.4); color:var(--point); font-size:12px; font-weight:500; padding:6px 18px; border-radius:20px; margin-bottom:24px; letter-spacing:2px; text-transform:uppercase; }
-  .hero h1 { font-family:'Noto Serif KR',serif; font-size:clamp(28px,5vw,52px); color:#fff; line-height:1.3; margin-bottom:16px; }
-  .hero h1 em { color:var(--point); font-style:normal; }
-  .hero p { color:rgba(255,255,255,0.7); font-size:16px; line-height:1.8; max-width:600px; margin:0 auto 36px; }
-  .hero-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+    /* ─── SECTION COMMON ─── */
+    section { padding: 5rem 1.5rem; }
+    .section-header { text-align: center; margin-bottom: 3rem; }
+    .section-tag {
+      font-size: 0.72rem; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--gold); display: block; margin-bottom: 0.6rem;
+    }
+    .section-header h2 {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 400; color: var(--ink);
+    }
+    .section-header h2 em { color: var(--gold); font-style: italic; }
+    .section-header p { color: var(--muted); margin-top: 0.6rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
 
-  .btn-primary { background:var(--point); color:var(--main); border:none; padding:14px 32px; border-radius:30px; font-family:'Noto Sans KR',sans-serif; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 20px rgba(232,168,124,0.4); }
-  .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(232,168,124,0.5); }
-  .btn-secondary { background:transparent; color:#fff; border:1px solid rgba(255,255,255,0.4); padding:14px 32px; border-radius:30px; font-family:'Noto Sans KR',sans-serif; font-size:15px; cursor:pointer; transition:all 0.2s; }
-  .btn-secondary:hover { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.7); }
+    /* ─── GUIDE SECTION ─── */
+    #guide { background: var(--cream); }
+    .pipeline-flow {
+      display: flex; gap: 1rem; align-items: stretch;
+      flex-wrap: wrap; justify-content: center; margin-bottom: 3rem;
+    }
+    .pipe-step {
+      flex: 1; min-width: 200px; max-width: 240px;
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1.4rem; text-align: center;
+      position: relative;
+    }
+    .pipe-step-num {
+      width: 32px; height: 32px; background: var(--ink); color: var(--paper);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 700; margin: 0 auto 0.7rem;
+    }
+    .pipe-step h4 { font-size: 0.9rem; color: var(--ink); margin-bottom: 0.2rem; }
+    .pipe-step p { font-size: 0.78rem; color: var(--muted); }
 
-  /* STATS */
-  .stats { background:var(--card); border-bottom:1px solid var(--border); display:flex; justify-content:center; flex-wrap:wrap; }
-  .stat-item { padding:24px 48px; text-align:center; border-right:1px solid var(--border); }
-  .stat-item:last-child { border-right:none; }
-  .stat-num { font-family:'Noto Serif KR',serif; font-size:28px; font-weight:700; color:var(--point); display:block; }
-  .stat-label { font-size:12px; color:var(--sub); margin-top:4px; }
+    /* ─── DETAIL GUIDE CARDS ─── */
+    .guide-cards { display: flex; flex-direction: column; gap: 2rem; }
+    .guide-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden; box-shadow: var(--shadow);
+    }
+    .guide-card-header {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1.4rem 2rem; border-bottom: 1px solid var(--border);
+      background: linear-gradient(90deg, var(--cream) 0%, var(--card-bg) 100%);
+      flex-wrap: wrap;
+    }
+    .guide-card-icon {
+      width: 48px; height: 48px; border-radius: 10px;
+      background: var(--ink); color: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; flex-shrink: 0;
+    }
+    .guide-card-title h3 { font-size: 1.05rem; color: var(--ink); }
+    .guide-card-title span { font-size: 0.75rem; color: var(--muted); letter-spacing: 1px; }
+    .guide-site-btn {
+      margin-left: auto;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.45rem 1.1rem; border-radius: 20px;
+      background: var(--gold); color: var(--ink);
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.5px;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      font-family: inherit;
+    }
+    .guide-site-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+    .guide-card-body { padding: 1.6rem 2rem; }
+    .guide-steps { display: flex; flex-direction: column; gap: 1rem; }
+    .guide-step {
+      display: flex; gap: 1rem; align-items: flex-start;
+      padding: 1rem 1.2rem; background: var(--cream);
+      border-radius: 8px; border-left: 3px solid var(--gold);
+    }
+    .guide-step-num {
+      width: 28px; height: 28px; background: var(--gold); color: #fff;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+    }
+    .guide-step-content h5 { font-size: 0.88rem; color: var(--ink); margin-bottom: 0.2rem; }
+    .guide-step-content p { font-size: 0.81rem; color: var(--muted); line-height: 1.5; }
+    .guide-tip {
+      margin-top: 1rem; padding: 0.9rem 1.2rem;
+      background: #fff8e8; border: 1px solid #e8d090;
+      border-radius: 8px; font-size: 0.82rem; color: #7a5c1e;
+      display: flex; gap: 0.5rem; align-items: flex-start;
+    }
 
-  /* CONTAINER */
-  .container { max-width:1200px; margin:0 auto; padding:60px 40px; }
-  .section-title { font-family:'Noto Serif KR',serif; font-size:28px; font-weight:700; color:var(--main); margin-bottom:8px; }
-  .section-sub { color:var(--sub); font-size:14px; margin-bottom:40px; }
+    /* ─── GALLERY SECTION ─── */
+    #gallery { background: var(--paper); }
+    .gallery-filters {
+      display: flex; gap: 0.5rem; flex-wrap: wrap;
+      justify-content: center; margin-bottom: 2rem;
+    }
+    .filter-btn {
+      padding: 0.4rem 1rem; border-radius: 20px;
+      border: 1px solid var(--border); background: var(--card-bg);
+      font-size: 0.8rem; color: var(--muted); cursor: pointer;
+      transition: all 0.2s; font-family: inherit;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--ink); color: var(--paper); border-color: var(--ink);
+    }
+    .gallery-upload-btn {
+      display: flex; justify-content: flex-end; margin-bottom: 1.5rem;
+    }
+    .btn-upload {
+      background: var(--gold); color: var(--ink); padding: 0.6rem 1.4rem;
+      border: none; border-radius: 4px; font-size: 0.85rem;
+      font-weight: 700; cursor: pointer; font-family: inherit;
+      transition: background 0.2s;
+    }
+    .btn-upload:hover { background: var(--gold-light); }
+    #gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .video-card {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden; box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .video-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(26,18,9,0.13); }
+    .video-thumb {
+      width: 100%; aspect-ratio: 16/9; background: #1a1209;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden; cursor: pointer;
+    }
+    .video-thumb video, .video-thumb iframe {
+      width: 100%; height: 100%; object-fit: cover; border: none;
+    }
+    .video-thumb-placeholder {
+      color: var(--gold); font-size: 2.5rem; opacity: 0.5;
+    }
+    .video-info { padding: 1rem 1.1rem; }
+    .video-book { font-size: 0.95rem; font-weight: 700; color: var(--ink); margin-bottom: 0.15rem; }
+    .video-author { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.5rem; }
+    .video-meta {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 0.6rem;
+    }
+    .video-actions { display: flex; align-items: center; gap: 0.5rem; }
+    .like-btn {
+      background: none; border: 1px solid var(--border);
+      border-radius: 20px; padding: 0.3rem 0.8rem;
+      font-size: 0.78rem; cursor: pointer; color: var(--muted);
+      display: flex; align-items: center; gap: 0.3rem;
+      transition: all 0.2s; font-family: inherit;
+    }
+    .like-btn:hover, .like-btn.liked { background: #fff0f0; border-color: #e88; color: #c44; }
+    .delete-btn {
+      background: none; border: 1px solid #e8b8b8;
+      border-radius: 20px; padding: 0.3rem 0.8rem;
+      font-size: 0.75rem; cursor: pointer; color: #c44;
+      transition: all 0.2s; font-family: inherit;
+    }
+    .delete-btn:hover { background: #ffe8e8; border-color: #c44; }
+    .video-uploader { font-size: 0.75rem; color: var(--muted); }
 
-  /* GALLERY */
-  .gallery-header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:32px; flex-wrap:wrap; gap:16px; }
-  .filter-tabs { display:flex; gap:8px; flex-wrap:wrap; }
-  .filter-tab { background:var(--card); border:1px solid var(--border); color:var(--sub); padding:8px 20px; border-radius:20px; font-size:13px; cursor:pointer; transition:all 0.2s; font-family:'Noto Sans KR',sans-serif; }
-  .filter-tab:hover, .filter-tab.active { background:var(--main); color:#fff; border-color:var(--main); }
-  .upload-btn { background:var(--point); color:var(--main); border:none; padding:10px 24px; border-radius:20px; font-family:'Noto Sans KR',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:6px; }
-  .upload-btn:hover { transform:translateY(-1px); box-shadow:0 4px 16px rgba(232,168,124,0.4); }
+    /* ─── COMMUNITY SECTION ─── */
+    #community { background: var(--cream); }
+    .community-grid {
+      display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;
+    }
+    @media(max-width:768px){ .community-grid { grid-template-columns: 1fr; } }
+    .board-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.2rem;
+    }
+    .board-header h3 { font-size: 1rem; color: var(--ink); }
+    .btn-write {
+      background: var(--ink); color: var(--paper);
+      border: none; border-radius: 4px; padding: 0.4rem 1rem;
+      font-size: 0.8rem; cursor: pointer; font-family: inherit;
+    }
+    .btn-write:hover { background: var(--gold); color: var(--ink); }
+    #posts-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .post-item {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.9rem 1.1rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem;
+    }
+    .post-item-left { flex: 1; min-width: 0; }
+    .post-title { font-size: 0.88rem; color: var(--ink); font-weight: 600; cursor: pointer; }
+    .post-title:hover { color: var(--gold); }
+    .post-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+    .post-delete-btn {
+      background: none; border: 1px solid #e8b8b8;
+      border-radius: 16px; padding: 0.25rem 0.7rem;
+      font-size: 0.72rem; cursor: pointer; color: #c44;
+      white-space: nowrap; transition: all 0.2s; font-family: inherit;
+      flex-shrink: 0;
+    }
+    .post-delete-btn:hover { background: #ffe8e8; border-color: #c44; }
+    .sidebar-widget {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.4rem; margin-bottom: 1.2rem;
+    }
+    .sidebar-widget h4 { font-size: 0.88rem; color: var(--ink); margin-bottom: 0.8rem; }
+    .notice-item { font-size: 0.82rem; color: var(--muted); padding: 0.4rem 0; border-bottom: 1px solid var(--border); }
+    .notice-item:last-child { border-bottom: none; }
 
-  /* VIDEO GRID */
-  .video-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:24px; }
+    /* ─── MODAL ─── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(26,18,9,0.7); align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--card-bg); border-radius: 14px;
+      padding: 2rem; max-width: 520px; width: 90%;
+      max-height: 90vh; overflow-y: auto; position: relative;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+    }
+    .modal-close {
+      position: absolute; top: 1rem; right: 1rem;
+      background: none; border: none; font-size: 1.4rem;
+      cursor: pointer; color: var(--muted);
+    }
+    .modal h3 { font-size: 1.1rem; margin-bottom: 1.2rem; color: var(--ink); }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border);
+      border-radius: 6px; font-family: inherit; font-size: 0.9rem;
+      background: var(--paper); color: var(--ink); outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--gold); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-submit {
+      width: 100%; background: var(--ink); color: var(--paper);
+      border: none; border-radius: 6px; padding: 0.8rem;
+      font-size: 0.9rem; cursor: pointer; font-family: inherit;
+      transition: background 0.2s; margin-top: 0.5rem;
+    }
+    .form-submit:hover { background: var(--gold); color: var(--ink); }
 
-  /* CARD */
-  .video-card { background:var(--card); border-radius:16px; overflow:hidden; box-shadow:0 2px 16px var(--shadow); transition:all 0.3s; cursor:pointer; }
-  .video-card:hover { transform:translateY(-4px); box-shadow:0 8px 32px rgba(44,62,80,0.15); }
-  .video-thumb { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; }
-  .video-thumb-placeholder { width:100%; aspect-ratio:16/9; background:linear-gradient(135deg,#2C3E50,#3D5166); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; }
-  .video-thumb-placeholder .play-icon { width:52px; height:52px; background:rgba(232,168,124,0.85); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; color:var(--main); }
-  .video-thumb-placeholder span { color:rgba(255,255,255,0.5); font-size:12px; }
-  .card-body { padding:18px 20px; }
-  .card-meta { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-  .card-genre { background:rgba(232,168,124,0.15); color:var(--point); font-size:11px; font-weight:700; padding:3px 10px; border-radius:10px; }
-  .card-date { font-size:11px; color:var(--sub); margin-left:auto; }
-  .card-title { font-family:'Noto Serif KR',serif; font-size:16px; font-weight:600; color:var(--main); margin-bottom:6px; line-height:1.4; }
-  .card-book { font-size:12px; color:var(--sub); margin-bottom:14px; }
-  .card-book span { color:var(--point); font-weight:500; }
-  .card-footer { display:flex; align-items:center; justify-content:space-between; padding-top:14px; border-top:1px solid var(--border); }
-  .card-author { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--sub); }
-  .avatar { width:28px; height:28px; border-radius:50%; background:var(--main); color:var(--point); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; }
-  .card-actions { display:flex; gap:12px; }
-  .action-btn { background:none; border:none; color:var(--sub); font-size:13px; cursor:pointer; display:flex; align-items:center; gap:4px; transition:color 0.2s; font-family:'Noto Sans KR',sans-serif; }
-  .action-btn:hover { color:var(--point); }
-  .action-btn.liked { color:#E74C3C; }
+    /* ─── FOOTER ─── */
+    footer {
+      background: var(--ink); color: rgba(250,247,242,0.6);
+      text-align: center; padding: 2rem 1.5rem;
+      font-size: 0.8rem; letter-spacing: 0.5px;
+    }
+    footer strong { color: var(--gold); }
 
-  /* UPLOAD MODAL */
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(4px); }
-  .modal-overlay.open { display:flex; }
-  .modal { background:var(--card); border-radius:20px; padding:40px; width:100%; max-width:540px; max-height:90vh; overflow-y:auto; position:relative; }
-  .modal-close { position:absolute; top:20px; right:20px; background:none; border:none; font-size:22px; cursor:pointer; color:var(--sub); }
-  .modal-close:hover { color:var(--main); }
-  .modal h2 { font-family:'Noto Serif KR',serif; font-size:22px; font-weight:700; color:var(--main); margin-bottom:6px; }
-  .modal-sub { font-size:13px; color:var(--sub); margin-bottom:28px; }
-  .form-group { margin-bottom:20px; }
-  .form-group label { display:block; font-size:13px; font-weight:700; color:var(--main); margin-bottom:8px; }
-  .form-group label span { color:#E74C3C; }
-  .form-group input, .form-group select, .form-group textarea { width:100%; padding:12px 16px; border:1.5px solid var(--border); border-radius:10px; font-family:'Noto Sans KR',sans-serif; font-size:14px; color:var(--text); background:var(--bg); outline:none; transition:border-color 0.2s; appearance:none; }
-  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--point); }
-  .form-group textarea { height:90px; resize:none; }
+    /* ─── LOADING / EMPTY ─── */
+    .loading { text-align: center; padding: 3rem; color: var(--muted); font-size: 0.9rem; }
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
 
-  /* 업로드 탭 */
-  .upload-tabs { display:flex; background:var(--bg); border-radius:10px; padding:4px; margin-bottom:16px; border:1.5px solid var(--border); }
-  .upload-tab-btn { flex:1; padding:10px; border:none; background:none; border-radius:8px; font-family:'Noto Sans KR',sans-serif; font-size:13px; font-weight:500; color:var(--sub); cursor:pointer; transition:all 0.2s; }
-  .upload-tab-btn.active { background:var(--card); color:var(--main); font-weight:700; box-shadow:0 2px 8px var(--shadow); }
-
-  /* 드롭존 */
-  .dropzone { border:2px dashed var(--border); border-radius:12px; padding:32px 20px; text-align:center; cursor:pointer; transition:all 0.2s; background:var(--bg); }
-  .dropzone:hover, .dropzone.dragover { border-color:var(--point); background:rgba(232,168,124,0.05); }
-  .dropzone .dz-icon { font-size:36px; margin-bottom:10px; }
-  .dropzone .dz-text { font-size:14px; color:var(--sub); line-height:1.6; }
-  .dropzone .dz-text strong { color:var(--point); }
-  .dropzone .dz-limit { font-size:11px; color:#B0B8C1; margin-top:6px; }
-  #fileInput { display:none; }
-
-  /* 진행바 */
-  .progress-wrap { display:none; margin-top:16px; }
-  .progress-wrap.show { display:block; }
-  .progress-info { display:flex; justify-content:space-between; font-size:12px; color:var(--sub); margin-bottom:8px; }
-  .progress-bar-bg { background:var(--border); border-radius:10px; height:8px; overflow:hidden; }
-  .progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--point),#F5C89A); border-radius:10px; width:0%; transition:width 0.3s; }
-
-  /* 파일 미리보기 */
-  .file-preview { display:none; background:var(--bg); border:1.5px solid var(--border); border-radius:10px; padding:14px 16px; margin-top:12px; align-items:center; gap:12px; }
-  .file-preview.show { display:flex; }
-  .file-preview .file-icon { font-size:24px; }
-  .file-preview .file-info { flex:1; min-width:0; }
-  .file-preview .file-name { font-size:13px; font-weight:700; color:var(--main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .file-preview .file-size { font-size:11px; color:var(--sub); margin-top:2px; }
-  .file-preview .file-remove { background:none; border:none; font-size:18px; color:var(--sub); cursor:pointer; }
-  .file-preview .file-remove:hover { color:#E74C3C; }
-
-  /* 업로드 성공 */
-  .upload-success { display:none; background:rgba(39,174,96,0.1); border:1px solid rgba(39,174,96,0.3); border-radius:10px; padding:14px 16px; color:#27AE60; font-size:13px; text-align:center; margin-top:16px; align-items:center; justify-content:center; gap:8px; }
-  .upload-success.show { display:flex; }
-
-  .submit-btn { width:100%; background:var(--main); color:#fff; border:none; padding:16px; border-radius:12px; font-family:'Noto Sans KR',sans-serif; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.2s; margin-top:8px; display:flex; align-items:center; justify-content:center; gap:8px; }
-  .submit-btn:hover:not(:disabled) { background:#3D5166; transform:translateY(-1px); }
-  .submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
-
-  /* VIDEO MODAL */
-  .video-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:2000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(8px); }
-  .video-modal.open { display:flex; }
-  .video-modal-inner { background:var(--main); border-radius:20px; overflow:hidden; width:100%; max-width:800px; position:relative; }
-  .video-modal-close { position:absolute; top:16px; right:16px; background:rgba(0,0,0,0.5); border:none; color:#fff; font-size:20px; width:36px; height:36px; border-radius:50%; cursor:pointer; z-index:10; display:flex; align-items:center; justify-content:center; }
-  #modalVideoPlayer { width:100%; aspect-ratio:16/9; display:block; }
-  .video-modal-info { padding:20px 24px; }
-  .video-modal-info h3 { font-family:'Noto Serif KR',serif; font-size:18px; color:#fff; margin-bottom:8px; }
-  .video-modal-info p { font-size:13px; color:rgba(255,255,255,0.6); }
-
-  /* GUIDE */
-  .guide-hero { background:linear-gradient(135deg,var(--main) 0%,#3D5166 100%); border-radius:20px; padding:48px; margin-bottom:48px; text-align:center; color:#fff; }
-  .guide-hero h2 { font-family:'Noto Serif KR',serif; font-size:32px; margin-bottom:12px; }
-  .guide-hero h2 em { color:var(--point); font-style:normal; }
-  .guide-hero p { opacity:0.75; font-size:15px; line-height:1.8; }
-  .pipeline { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:48px; }
-  .pipeline-step { background:var(--card); border-radius:16px; padding:24px 20px; text-align:center; border:1px solid var(--border); transition:all 0.2s; }
-  .pipeline-step:hover { transform:translateY(-3px); box-shadow:0 8px 24px var(--shadow); }
-  .step-num { width:32px; height:32px; background:var(--point); color:var(--main); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; margin:0 auto 14px; }
-  .step-tool { font-size:11px; font-weight:700; color:var(--point); letter-spacing:1px; text-transform:uppercase; margin-bottom:6px; }
-  .step-title { font-family:'Noto Serif KR',serif; font-size:15px; font-weight:600; color:var(--main); margin-bottom:8px; }
-  .step-desc { font-size:12px; color:var(--sub); line-height:1.6; }
-  .guide-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:24px; }
-  .guide-card { background:var(--card); border-radius:16px; border:1px solid var(--border); overflow:hidden; }
-  .guide-card-header { background:var(--main); padding:20px 24px; display:flex; align-items:center; gap:14px; }
-  .guide-card-icon { width:44px; height:44px; background:rgba(232,168,124,0.2); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; }
-  .guide-card-header h3 { font-family:'Noto Serif KR',serif; font-size:17px; color:#fff; }
-  .guide-card-header p { font-size:12px; color:rgba(255,255,255,0.5); margin-top:2px; }
-  .guide-card-body { padding:20px 24px; }
-  .guide-step-list { list-style:none; }
-  .guide-step-list li { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; line-height:1.6; color:var(--text); }
-  .guide-step-list li:last-child { border-bottom:none; }
-  .guide-step-list li .num { min-width:22px; height:22px; background:var(--bg); border:1px solid var(--border); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--point); margin-top:1px; }
-
-  /* COMMUNITY */
-  .community-layout { display:grid; grid-template-columns:1fr 320px; gap:32px; }
-  .notice-board { background:var(--card); border-radius:16px; border:1px solid var(--border); overflow:hidden; }
-  .board-header { background:var(--main); padding:18px 24px; display:flex; align-items:center; justify-content:space-between; }
-  .board-header h3 { font-family:'Noto Serif KR',serif; font-size:16px; color:#fff; }
-  .board-write-btn { background:rgba(232,168,124,0.2); border:1px solid rgba(232,168,124,0.4); color:var(--point); padding:6px 14px; border-radius:14px; font-size:12px; cursor:pointer; font-family:'Noto Sans KR',sans-serif; transition:all 0.2s; }
-  .board-write-btn:hover { background:rgba(232,168,124,0.3); }
-  .board-item { display:flex; align-items:flex-start; gap:14px; padding:18px 24px; border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.15s; }
-  .board-item:last-child { border-bottom:none; }
-  .board-item:hover { background:var(--bg); }
-  .board-badge { min-width:42px; height:20px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
-  .badge-notice { background:rgba(44,62,80,0.1); color:var(--main); }
-  .badge-tip { background:rgba(232,168,124,0.15); color:var(--point); }
-  .badge-qna { background:rgba(52,152,219,0.1); color:#3498DB; }
-  .board-content { flex:1; min-width:0; }
-  .board-title { font-size:14px; font-weight:500; color:var(--text); margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .board-meta { font-size:11px; color:var(--sub); }
-  .sidebar-widget { background:var(--card); border-radius:16px; border:1px solid var(--border); overflow:hidden; margin-bottom:20px; }
-  .widget-header { background:var(--main); padding:16px 20px; }
-  .widget-header h3 { font-family:'Noto Serif KR',serif; font-size:15px; color:#fff; }
-  .widget-body { padding:16px 20px; }
-  .rank-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
-  .rank-item:last-child { border-bottom:none; }
-  .rank-num { width:24px; font-size:16px; font-weight:700; color:var(--point); text-align:center; flex-shrink:0; }
-  .rank-text { flex:1; min-width:0; }
-  .rank-title { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .rank-views { font-size:11px; color:var(--sub); margin-top:2px; }
-
-  /* WRITE MODAL */
-  .write-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(4px); }
-  .write-modal.open { display:flex; }
-
-  /* EMPTY / LOADING */
-  .empty-state { grid-column:1/-1; text-align:center; padding:80px 20px; color:var(--sub); }
-  .empty-state .empty-icon { font-size:48px; margin-bottom:16px; }
-  .empty-state h3 { font-family:'Noto Serif KR',serif; font-size:20px; color:var(--main); margin-bottom:8px; }
-  .empty-state p { font-size:14px; line-height:1.8; }
-  .loading-state { grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--sub); font-size:15px; }
-
-  /* FOOTER */
-  footer { background:var(--main); color:rgba(255,255,255,0.5); text-align:center; padding:32px 20px; font-size:13px; line-height:1.8; margin-top:60px; }
-  footer strong { color:var(--point); }
-
-  /* TOAST */
-  .toast { position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--main); color:#fff; padding:14px 28px; border-radius:30px; font-size:14px; font-weight:500; z-index:9999; opacity:0; transition:all 0.35s; pointer-events:none; white-space:nowrap; box-shadow:0 8px 24px rgba(0,0,0,0.25); }
-  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-
-  /* RESPONSIVE */
-  @media (max-width:768px) {
-    header { padding:0 20px; }
-    .logo span { display:none; }
-    .container { padding:40px 20px; }
-    .hero { padding:60px 20px; }
-    .stats { flex-wrap:wrap; }
-    .stat-item { padding:16px 24px; border-right:none; border-bottom:1px solid var(--border); width:50%; }
-    .community-layout { grid-template-columns:1fr; }
-    .modal { padding:28px 20px; }
-  }
-</style>
+    /* ─── RECENT (HERO) ─── */
+    #recent-videos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.2rem; max-width: 1000px; margin: 0 auto 1.5rem;
+    }
+    .recent-more { text-align: center; }
+  </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<header>
-  <div class="logo" onclick="showSection('home')">北CINEMA <span>Book to AI Video</span></div>
-  <nav>
-    <button onclick="showSection('home')"      id="nav-home"      class="active">홈</button>
-    <button onclick="showSection('gallery')"   id="nav-gallery">갤러리</button>
-    <button onclick="showSection('guide')"     id="nav-guide">제작 가이드</button>
-    <button onclick="showSection('community')" id="nav-community">커뮤니티</button>
-  </nav>
-</header>
+<!-- ══ NAV ══ -->
+<nav>
+  <a class="nav-logo" href="#">北<span>CINEMA</span></a>
+  <ul class="nav-links">
+    <li><a href="#guide">AI 가이드</a></li>
+    <li><a href="#gallery">갤러리</a></li>
+    <li><a href="#community">커뮤니티</a></li>
+  </ul>
+</nav>
 
-<!-- HOME -->
-<div id="section-home" class="section active">
-  <div class="hero">
-    <div class="hero-tag">✦ Book to AI Video</div>
-    <h1>책 속의 장면을,<br><em>AI 영상</em>으로 되살리다</h1>
-    <p>나노바나나 · ChatGPT · Runway · CapCut으로<br>당신만의 북시네마를 만들어 공유하세요</p>
-    <div class="hero-btns">
-      <button class="btn-primary" onclick="showSection('gallery')">🎬 갤러리 보기</button>
-      <button class="btn-secondary" onclick="showSection('guide')">📖 만드는 방법</button>
-    </div>
+<!-- ══ HERO ══ -->
+<section class="hero" id="home">
+  <div class="hero-badge">✦ Book to AI Video</div>
+  <h1>책 속의 장면을, <em>AI 영상</em> 으로 되살리다</h1>
+  <p>나노바나나 · ChatGPT · Veo 3.1 · CapCut으로<br>당신만의 북시네마를 만들어 공유하세요</p>
+  <div class="hero-btns">
+    <a href="#gallery" class="btn btn-primary">🎬 갤러리 보기</a>
+    <a href="#guide" class="btn btn-outline">📖 만드는 방법</a>
   </div>
-  <div class="stats">
-    <div class="stat-item"><span class="stat-num" id="stat-videos">—</span><div class="stat-label">업로드된 영상</div></div>
-    <div class="stat-item"><span class="stat-num" id="stat-likes">—</span><div class="stat-label">총 좋아요</div></div>
-    <div class="stat-item"><span class="stat-num">4가지</span><div class="stat-label">AI 도구 파이프라인</div></div>
-    <div class="stat-item"><span class="stat-num">무료</span><div class="stat-label">서비스 이용 요금</div></div>
-  </div>
-  <div class="container">
-    <div style="text-align:center;margin-bottom:40px;">
-      <div class="section-title">최근 업로드 작품</div>
-      <div class="section-sub">커뮤니티 멤버들의 최신 북시네마 영상</div>
-    </div>
-    <div class="video-grid" id="home-grid"><div class="loading-state">⏳ 불러오는 중...</div></div>
-    <div style="text-align:center;margin-top:40px;">
-      <button class="btn-primary" onclick="showSection('gallery')">모든 작품 보기 →</button>
-    </div>
-  </div>
-</div>
 
-<!-- GALLERY -->
-<div id="section-gallery" class="section">
-  <div class="container">
-    <div class="gallery-header">
-      <div>
-        <div class="section-title">🎬 작품 갤러리</div>
-        <div class="section-sub">Book to AI Video 커뮤니티의 모든 작품을 감상하세요</div>
-        <div class="filter-tabs" style="margin-top:16px;">
-          <button class="filter-tab active" onclick="filterGallery('all',this)">전체</button>
-          <button class="filter-tab" onclick="filterGallery('소설',this)">소설</button>
-          <button class="filter-tab" onclick="filterGallery('시',this)">시</button>
-          <button class="filter-tab" onclick="filterGallery('에세이',this)">에세이</button>
-          <button class="filter-tab" onclick="filterGallery('고전',this)">고전</button>
-        </div>
+  <!-- ▼ NEW: AI 영상 만드는 방법 소개 박스 -->
+  <div class="hero-ai-intro">
+    <h3>🎞️ AI로 북 트레일러 만드는 법 — 4단계 요약</h3>
+    <div class="pipeline-mini">
+      <div class="pipeline-mini-step">
+        <div class="step-num">1</div>
+        🍌 나노바나나로 이미지 생성
       </div>
-      <button class="upload-btn" onclick="openUploadModal()">＋ 내 작품 올리기</button>
+      <div class="pipeline-mini-arrow">→</div>
+      <div class="pipeline-mini-step">
+        <div class="step-num">2</div>
+        🤖 ChatGPT로 프롬프트 최적화
+      </div>
+      <div class="pipeline-mini-arrow">→</div>
+      <div class="pipeline-mini-step">
+        <div class="step-num">3</div>
+        🎬 Veo 3.1로 AI 영상 생성
+      </div>
+      <div class="pipeline-mini-arrow">→</div>
+      <div class="pipeline-mini-step">
+        <div class="step-num">4</div>
+        ✂️ CapCut으로 숏폼 편집
+      </div>
     </div>
-    <div class="video-grid" id="gallery-grid"><div class="loading-state">⏳ 불러오는 중...</div></div>
+    <p class="pipeline-mini-desc">
+      책 한 줄에서 시작해, <strong>AI 이미지 → AI 영상 → 편집 완성</strong>까지 누구나 무료로 만들 수 있습니다.<br>
+      아래 <strong>단계별 AI 가이드</strong>에서 각 도구의 상세한 사용법을 확인하세요.
+    </p>
+    <!-- 시각적 필름스트립 이미지 -->
+    <div class="hero-ai-image">
+      <div class="film-strip">
+        <div class="film-frame">📖</div>
+        <div class="film-frame">🖼️</div>
+        <div class="film-frame">✨</div>
+        <div class="film-frame">🎬</div>
+        <div class="film-frame">▶️</div>
+        <div class="film-frame">🎞️</div>
+        <div class="film-frame">📱</div>
+        <div class="film-frame">🌟</div>
+      </div>
+      <span class="hero-ai-image-label">Book → Image → Video → Edit → Share</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ STATS ══ -->
+<div class="stats">
+  <div class="stat-item">
+    <div class="stat-num" id="stat-videos">—</div>
+    <div class="stat-label">업로드된 영상</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" id="stat-likes">—</div>
+    <div class="stat-label">총 좋아요</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">4가지</div>
+    <div class="stat-label">AI 도구 파이프라인</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">무료</div>
+    <div class="stat-label">서비스 이용 요금</div>
   </div>
 </div>
 
-<!-- GUIDE -->
-<div id="section-guide" class="section">
+<!-- ══ RECENT ══ -->
+<section style="padding:3rem 1.5rem; background:var(--paper);">
   <div class="container">
-    <div class="guide-hero">
+    <div class="section-header">
+      <span class="section-tag">Latest Works</span>
+      <h2>최근 업로드 작품</h2>
+      <p>커뮤니티 멤버들의 최신 북시네마 영상</p>
+    </div>
+    <div id="recent-videos"><div class="loading">⏳ 불러오는 중...</div></div>
+    <div class="recent-more">
+      <a href="#gallery" class="btn btn-outline">모든 작품 보기 →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SECTION 1: AI 가이드 (목차 1번)
+══════════════════════════════════════════ -->
+<section id="guide">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">How to Make</span>
       <h2>📚 <em>Book → AI Video</em> 완전 정복 가이드</h2>
       <p>책 한 줄에서 숏폼 영상까지, 4가지 AI 도구로 완성하는 창작 파이프라인</p>
     </div>
-    <div class="section-title" style="margin-bottom:8px;">🔄 제작 파이프라인</div>
-    <div class="section-sub" style="margin-bottom:24px;">총 4단계 AI 도구를 순서대로 활용하세요</div>
-    <div class="pipeline">
-      <div class="pipeline-step"><div class="step-num">1</div><div class="step-tool">Nanobanana</div><div class="step-title">이미지 생성</div><div class="step-desc">책 속 장면을 묘사하는 AI 이미지를 생성합니다</div></div>
-      <div class="pipeline-step"><div class="step-num">2</div><div class="step-tool">ChatGPT</div><div class="step-title">프롬프트 작성</div><div class="step-desc">영상화할 장면의 모션 프롬프트를 최적화합니다</div></div>
-      <div class="pipeline-step"><div class="step-num">3</div><div class="step-tool">Runway / Kling / Pika</div><div class="step-title">영상 생성</div><div class="step-desc">이미지를 AI 영상 모델로 움직이는 클립으로 변환합니다</div></div>
-      <div class="pipeline-step"><div class="step-num">4</div><div class="step-tool">CapCut</div><div class="step-title">편집 & 완성</div><div class="step-desc">9단계 CapCut 편집으로 숏폼 형식으로 완성합니다</div></div>
-    </div>
-    <div class="section-title" style="margin-bottom:8px;">📋 단계별 상세 가이드</div>
-    <div class="section-sub" style="margin-bottom:24px;">각 도구의 핵심 사용법을 단계별로 안내합니다</div>
-    <div class="guide-cards">
-      <div class="guide-card">
-        <div class="guide-card-header"><div class="guide-card-icon">🍌</div><div><h3>Nanobanana 이미지 생성</h3><p>STEP 1 · AI 이미지 도구</p></div></div>
-        <div class="guide-card-body"><ul class="guide-step-list">
-          <li><span class="num">1</span>책에서 영상화할 장면 1~3문장 선정</li>
-          <li><span class="num">2</span>Nanobanana 접속 후 새 프로젝트 생성</li>
-          <li><span class="num">3</span>장면 분위기·색감·시점 키워드 입력</li>
-          <li><span class="num">4</span>스타일: Cinematic / Film Grain 권장</li>
-          <li><span class="num">5</span>16:9 또는 9:16 비율로 이미지 생성</li>
-          <li><span class="num">6</span>최소 3장 생성 후 최적 이미지 선별</li>
-        </ul></div>
-      </div>
-      <div class="guide-card">
-        <div class="guide-card-header"><div class="guide-card-icon">🤖</div><div><h3>ChatGPT 프롬프트 최적화</h3><p>STEP 2 · 프롬프트 엔지니어링</p></div></div>
-        <div class="guide-card-body"><ul class="guide-step-list">
-          <li><span class="num">1</span>선정한 장면을 ChatGPT에 붙여넣기</li>
-          <li><span class="num">2</span>"이 장면을 Runway용 영상 프롬프트로 작성해줘" 요청</li>
-          <li><span class="num">3</span>카메라 무브먼트 명시 (slow zoom in, pan right 등)</li>
-          <li><span class="num">4</span>날씨·조명·시간대 조건 추가</li>
-          <li><span class="num">5</span>영어 프롬프트 최종 정리 (100자 내외)</li>
-        </ul></div>
-      </div>
-      <div class="guide-card">
-        <div class="guide-card-header"><div class="guide-card-icon">🎞️</div><div><h3>Runway / Kling / Pika 영상 생성</h3><p>STEP 3 · AI 영상 생성 도구</p></div></div>
-        <div class="guide-card-body"><ul class="guide-step-list">
-          <li><span class="num">1</span>Nanobanana 이미지를 도구에 업로드</li>
-          <li><span class="num">2</span>ChatGPT 프롬프트 입력칸에 붙여넣기</li>
-          <li><span class="num">3</span>영상 길이: 4초 또는 8초 선택</li>
-          <li><span class="num">4</span>Motion Strength: 중간~강 (3~4단계)</li>
-          <li><span class="num">5</span>Generate → 결과 확인 후 최적 클립 저장</li>
-          <li><span class="num">6</span>필요시 재생성 (Credits 관리 주의)</li>
-        </ul></div>
-      </div>
-      <div class="guide-card">
-        <div class="guide-card-header"><div class="guide-card-icon">✂️</div><div><h3>CapCut 9단계 편집 워크플로우</h3><p>STEP 4 · 최종 편집 완성</p></div></div>
-        <div class="guide-card-body"><ul class="guide-step-list">
-          <li><span class="num">1</span>새 프로젝트 생성 (9:16 세로 / 16:9 가로)</li>
-          <li><span class="num">2</span>AI 영상 클립 순서대로 타임라인 배치</li>
-          <li><span class="num">3</span>클립 간 트랜지션 추가 (Fade / Dissolve)</li>
-          <li><span class="num">4</span>책 원문 자막 추가 (감성 폰트 선택)</li>
-          <li><span class="num">5</span>배경음악 추가 (저작권 프리 음원)</li>
-          <li><span class="num">6</span>색보정 LUT 적용 (Cinematic / Moody)</li>
-          <li><span class="num">7</span>볼륨 밸런스 조정 (음악 -12dB 권장)</li>
-          <li><span class="num">8</span>시작·끝 페이드 아웃 효과 적용</li>
-          <li><span class="num">9</span>1080p / 60fps 고화질로 최종 내보내기</li>
-        </ul></div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- COMMUNITY -->
-<div id="section-community" class="section">
-  <div class="container">
-    <div class="section-title">💬 커뮤니티</div>
-    <div class="section-sub" style="margin-bottom:32px;">멤버들과 제작 팁, 질문, 소식을 나눠요</div>
-    <div class="community-layout">
-      <div>
-        <div class="notice-board">
-          <div class="board-header">
-            <h3>📌 게시판</h3>
-            <button class="board-write-btn" onclick="openWriteModal()">✏️ 글쓰기</button>
-          </div>
-          <div id="board-list"><div style="padding:24px;text-align:center;color:var(--sub);font-size:13px;">⏳ 불러오는 중...</div></div>
-        </div>
+    <!-- 파이프라인 플로우 -->
+    <div class="pipeline-flow">
+      <div class="pipe-step">
+        <div class="pipe-step-num">1</div>
+        <div style="font-size:1.6rem;margin-bottom:0.4rem;">🍌</div>
+        <h4>Nanobanana</h4>
+        <p>이미지 생성</p>
       </div>
-      <div>
-        <div class="sidebar-widget">
-          <div class="widget-header"><h3>🔥 인기 작품</h3></div>
-          <div class="widget-body" id="popular-list"><div style="font-size:13px;color:var(--sub);padding:8px 0;">⏳ 불러오는 중...</div></div>
+      <div style="display:flex;align-items:center;font-size:1.5rem;color:var(--gold);">→</div>
+      <div class="pipe-step">
+        <div class="pipe-step-num">2</div>
+        <div style="font-size:1.6rem;margin-bottom:0.4rem;">🤖</div>
+        <h4>ChatGPT</h4>
+        <p>프롬프트 작성</p>
+      </div>
+      <div style="display:flex;align-items:center;font-size:1.5rem;color:var(--gold);">→</div>
+      <div class="pipe-step">
+        <div class="pipe-step-num">3</div>
+        <div style="font-size:1.6rem;margin-bottom:0.4rem;">🎬</div>
+        <h4>Veo 3.1</h4>
+        <p>AI 영상 생성</p>
+      </div>
+      <div style="display:flex;align-items:center;font-size:1.5rem;color:var(--gold);">→</div>
+      <div class="pipe-step">
+        <div class="pipe-step-num">4</div>
+        <div style="font-size:1.6rem;margin-bottom:0.4rem;">✂️</div>
+        <h4>CapCut</h4>
+        <p>편집 & 완성</p>
+      </div>
+    </div>
+
+    <!-- 단계별 상세 가이드 카드 -->
+    <div class="guide-cards">
+
+      <!-- STEP 1: Nanobanana -->
+      <div class="guide-card">
+        <div class="guide-card-header">
+          <div class="guide-card-icon">🍌</div>
+          <div class="guide-card-title">
+            <h3>Nanobanana — AI 이미지 생성</h3>
+            <span>STEP 1 · AI 이미지 도구</span>
+          </div>
+          <a href="https://nanobanana.ai" target="_blank" class="guide-site-btn">🔗 사이트 바로가기</a>
         </div>
-        <div class="sidebar-widget">
-          <div class="widget-header"><h3>📢 공지사항</h3></div>
-          <div class="widget-body">
-            <div style="font-size:13px;color:var(--sub);line-height:1.8;padding:4px 0;">
-              🎉 북시네마 커뮤니티 오픈!<br>영상 업로드 및 갤러리 공유 기능을 이용해보세요.<br><br>
-              📌 저작권 관련 원칙을 지켜주세요.<br>
-              📌 AI 생성 영상임을 명시해주세요.
+        <div class="guide-card-body">
+          <div class="guide-steps">
+            <div class="guide-step">
+              <div class="guide-step-num">1</div>
+              <div class="guide-step-content">
+                <h5>책 장면 선정</h5>
+                <p>영상으로 만들고 싶은 장면 1~3문장을 책에서 선택합니다. 감정이 강하거나 시각적 묘사가 풍부한 장면이 좋습니다.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">2</div>
+              <div class="guide-step-content">
+                <h5>Nanobanana 접속 → 새 프로젝트 생성</h5>
+                <p>우측 상단 [새 이미지 생성] 버튼 클릭 → 스타일 설정 화면 진입합니다.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">3</div>
+              <div class="guide-step-content">
+                <h5>프롬프트 입력</h5>
+                <p>장면의 <strong>분위기 · 색감 · 시점</strong>을 키워드로 입력합니다.<br>예) <em>"책상 위 촛불, 낡은 편지, 골든아워, 필름 그레인, 시네마틱"</em></p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">4</div>
+              <div class="guide-step-content">
+                <h5>스타일 설정</h5>
+                <p><strong>Cinematic / Film Grain</strong> 스타일을 권장합니다. 비율은 <strong>16:9(가로)</strong> 또는 <strong>9:16(세로 숏폼)</strong> 선택.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">5</div>
+              <div class="guide-step-content">
+                <h5>이미지 선별 및 저장</h5>
+                <p>최소 3장 이상 생성 후 가장 영상 느낌이 강한 이미지 1장을 선택합니다. 고화질로 다운로드 후 다음 단계로 이동.</p>
+              </div>
             </div>
           </div>
+          <div class="guide-tip">💡 <span><strong>팁:</strong> "책 제목 + 핵심 감정 단어 + 시네마틱" 형식으로 프롬프트를 쓰면 일관된 분위기를 유지할 수 있어요.</span></div>
+        </div>
+      </div>
+
+      <!-- STEP 2: ChatGPT -->
+      <div class="guide-card">
+        <div class="guide-card-header">
+          <div class="guide-card-icon">🤖</div>
+          <div class="guide-card-title">
+            <h3>ChatGPT — 프롬프트 최적화</h3>
+            <span>STEP 2 · 프롬프트 엔지니어링</span>
+          </div>
+          <a href="https://chat.openai.com" target="_blank" class="guide-site-btn">🔗 사이트 바로가기</a>
+        </div>
+        <div class="guide-card-body">
+          <div class="guide-steps">
+            <div class="guide-step">
+              <div class="guide-step-num">1</div>
+              <div class="guide-step-content">
+                <h5>장면 텍스트 붙여넣기</h5>
+                <p>선택한 책 장면(1~3문장)을 ChatGPT 대화창에 붙여넣습니다.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">2</div>
+              <div class="guide-step-content">
+                <h5>프롬프트 변환 요청</h5>
+                <p>아래 문장을 그대로 사용하세요:<br><em>"이 장면을 Veo 3.1용 영상 생성 프롬프트로 영어로 작성해줘. 카메라 무브먼트, 조명, 분위기를 포함해서 100자 내외로."</em></p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">3</div>
+              <div class="guide-step-content">
+                <h5>카메라 무브먼트 추가</h5>
+                <p>프롬프트에 카메라 움직임을 명시하세요.<br>예) <em>slow zoom in / dolly forward / pan right / static shot</em></p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">4</div>
+              <div class="guide-step-content">
+                <h5>조건 세부화</h5>
+                <p>날씨 · 조명 · 시간대를 추가합니다.<br>예) <em>golden hour light / rainy night / foggy morning / candlelight interior</em></p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">5</div>
+              <div class="guide-step-content">
+                <h5>최종 영어 프롬프트 정리</h5>
+                <p>100자 내외의 영어 프롬프트를 복사해 메모장에 저장합니다. Veo 3.1 입력에 바로 사용할 수 있습니다.</p>
+              </div>
+            </div>
+          </div>
+          <div class="guide-tip">💡 <span><strong>팁:</strong> ChatGPT에게 "더 영화적으로", "더 감성적으로" 라고 추가 요청하면 프롬프트 품질이 높아집니다.</span></div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Veo 3.1 -->
+      <div class="guide-card">
+        <div class="guide-card-header">
+          <div class="guide-card-icon">🎬</div>
+          <div class="guide-card-title">
+            <h3>Veo 3.1 — AI 영상 생성</h3>
+            <span>STEP 3 · Google DeepMind AI 영상 모델</span>
+          </div>
+          <a href="https://labs.google/flow" target="_blank" class="guide-site-btn">🔗 사이트 바로가기</a>
+        </div>
+        <div class="guide-card-body">
+          <div class="guide-steps">
+            <div class="guide-step">
+              <div class="guide-step-num">1</div>
+              <div class="guide-step-content">
+                <h5>Google Flow(VideoFX) 접속</h5>
+                <p>Google 계정으로 로그인 후 <strong>VideoFX / Google Flow</strong>에서 Veo 3.1 모델을 선택합니다. (Google One AI Premium 구독 또는 waitlist 신청 필요)</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">2</div>
+              <div class="guide-step-content">
+                <h5>이미지 업로드 (Image-to-Video)</h5>
+                <p>Nanobanana에서 저장한 이미지를 업로드합니다. [+Image] 버튼 클릭 → 이미지 선택.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">3</div>
+              <div class="guide-step-content">
+                <h5>프롬프트 입력</h5>
+                <p>ChatGPT로 최적화한 영어 프롬프트를 텍스트 입력창에 붙여넣습니다. Veo 3.1은 <strong>음향 효과와 배경음 자동 생성</strong>도 지원합니다.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">4</div>
+              <div class="guide-step-content">
+                <h5>영상 설정</h5>
+                <p>영상 길이: <strong>5초 또는 8초</strong> 선택<br>해상도: <strong>1080p</strong> 권장<br>종횡비: <strong>9:16(세로)</strong> 또는 <strong>16:9(가로)</strong></p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">5</div>
+              <div class="guide-step-content">
+                <h5>생성 및 저장</h5>
+                <p>[Generate] 클릭 → 약 30~60초 대기 → 결과 영상 미리보기 → 마음에 들면 <strong>고화질 다운로드</strong>. 마음에 들지 않으면 프롬프트를 수정하여 재시도합니다.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">6</div>
+              <div class="guide-step-content">
+                <h5>여러 클립 생성</h5>
+                <p>책의 다른 장면으로 2~5개의 클립을 생성합니다. CapCut에서 이어 붙여 완성도 높은 북 트레일러를 만들 수 있습니다.</p>
+              </div>
+            </div>
+          </div>
+          <div class="guide-tip">💡 <span><strong>Veo 3.1 특징:</strong> Google DeepMind의 최신 영상 생성 모델로, 자연스러운 움직임과 물리 법칙을 이해하는 영상을 생성합니다. 특히 <strong>오디오 동기화</strong>가 뛰어나 배경음이 자동으로 생성됩니다.</span></div>
+        </div>
+      </div>
+
+      <!-- STEP 4: CapCut -->
+      <div class="guide-card">
+        <div class="guide-card-header">
+          <div class="guide-card-icon">✂️</div>
+          <div class="guide-card-title">
+            <h3>CapCut — 숏폼 편집 완성</h3>
+            <span>STEP 4 · 최종 편집 워크플로우</span>
+          </div>
+          <a href="https://www.capcut.com" target="_blank" class="guide-site-btn">🔗 사이트 바로가기</a>
+        </div>
+        <div class="guide-card-body">
+          <div class="guide-steps">
+            <div class="guide-step">
+              <div class="guide-step-num">1</div>
+              <div class="guide-step-content">
+                <h5>새 프로젝트 생성</h5>
+                <p>CapCut 앱 또는 웹 실행 → [새 프로젝트] → 비율 설정: <strong>9:16 세로(숏폼)</strong> 또는 <strong>16:9 가로</strong> 선택.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">2</div>
+              <div class="guide-step-content">
+                <h5>클립 배치</h5>
+                <p>Veo 3.1 영상 클립들을 스토리 순서대로 타임라인에 드래그합니다. 전체 길이는 <strong>30초~60초</strong>를 목표로 하세요.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">3</div>
+              <div class="guide-step-content">
+                <h5>트랜지션 추가</h5>
+                <p>클립 사이 [+] 버튼 → 트랜지션 메뉴 → <strong>Fade</strong> 또는 <strong>Dissolve</strong> 선택. 지속시간: 0.5초 권장.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">4</div>
+              <div class="guide-step-content">
+                <h5>자막 추가</h5>
+                <p>[텍스트] → [자막 추가] → 책의 핵심 문장을 입력합니다. 폰트: <strong>명조 / 감성 세리프</strong> 권장. 텍스트 애니메이션: Fade In 적용.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">5</div>
+              <div class="guide-step-content">
+                <h5>배경음악 추가</h5>
+                <p>[오디오] → [음악] → 저작권 프리 음원 선택. 분위기에 맞는 <strong>클래식 / 앰비언트</strong> 장르 권장. Veo 3.1 자동 음향이 있으면 음량 조절만 하세요.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">6</div>
+              <div class="guide-step-content">
+                <h5>색보정 LUT 적용</h5>
+                <p>[필터] → <strong>Cinematic</strong> 또는 <strong>Moody</strong> 필터 선택. 강도: 40~60% 권장. 원본 영상 느낌을 해치지 않는 선에서 적용.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">7</div>
+              <div class="guide-step-content">
+                <h5>볼륨 밸런스 조정</h5>
+                <p>배경음악 볼륨: <strong>-12dB (약 30%)</strong>로 설정. Veo 자동 음향이 있으면 메인 트랙으로 유지하고 음악은 더 줄이세요.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">8</div>
+              <div class="guide-step-content">
+                <h5>페이드 아웃 효과</h5>
+                <p>첫 클립 시작과 마지막 클립 끝에 <strong>페이드 인/아웃</strong> 효과를 적용합니다. 오디오도 끝부분에서 서서히 줄어들도록 설정.</p>
+              </div>
+            </div>
+            <div class="guide-step">
+              <div class="guide-step-num">9</div>
+              <div class="guide-step-content">
+                <h5>최종 내보내기</h5>
+                <p>[내보내기] → 해상도: <strong>1080p</strong> → 프레임: <strong>30fps</strong> → 저장. 파일을 北CINEMA 갤러리에 업로드하세요!</p>
+              </div>
+            </div>
+          </div>
+          <div class="guide-tip">💡 <span><strong>팁:</strong> CapCut의 [자동 자막] 기능으로 AI가 자동으로 자막을 생성해줍니다. 책 제목과 저자 크레딧도 마지막 장면에 넣어주세요.</span></div>
+        </div>
+      </div>
+
+    </div><!-- /guide-cards -->
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SECTION 2: 갤러리 (목차 2번)
+══════════════════════════════════════════ -->
+<section id="gallery">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Gallery</span>
+      <h2>🎬 작품 갤러리</h2>
+      <p>Book to AI Video 커뮤니티의 모든 작품을 감상하세요</p>
+    </div>
+    <div class="gallery-filters">
+      <button class="filter-btn active" onclick="filterGallery('all')">전체</button>
+      <button class="filter-btn" onclick="filterGallery('소설')">소설</button>
+      <button class="filter-btn" onclick="filterGallery('시')">시</button>
+      <button class="filter-btn" onclick="filterGallery('에세이')">에세이</button>
+      <button class="filter-btn" onclick="filterGallery('고전')">고전</button>
+    </div>
+    <div class="gallery-upload-btn">
+      <button class="btn-upload" onclick="openUploadModal()">＋ 내 작품 올리기</button>
+    </div>
+    <div id="gallery-grid"><div class="loading">⏳ 불러오는 중...</div></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SECTION 3: 커뮤니티 (목차 3번)
+══════════════════════════════════════════ -->
+<section id="community">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-tag">Community</span>
+      <h2>💬 커뮤니티</h2>
+      <p>멤버들과 제작 팁, 질문, 소식을 나눠요</p>
+    </div>
+    <div class="community-grid">
+      <div>
+        <div class="board-header">
+          <h3>📌 게시판</h3>
+          <button class="btn-write" onclick="openPostModal()">✏️ 글쓰기</button>
+        </div>
+        <div id="posts-list"><div class="loading">⏳ 불러오는 중...</div></div>
+      </div>
+      <div>
+        <div class="sidebar-widget">
+          <h4>🔥 인기 작품</h4>
+          <div id="popular-list"><div class="loading" style="padding:1rem 0;">불러오는 중...</div></div>
+        </div>
+        <div class="sidebar-widget">
+          <h4>📢 공지사항</h4>
+          <div class="notice-item">🎉 북시네마 커뮤니티 오픈!</div>
+          <div class="notice-item">📌 저작권 관련 원칙을 지켜주세요.</div>
+          <div class="notice-item">📌 AI 생성 영상임을 명시해주세요.</div>
         </div>
       </div>
     </div>
   </div>
-</div>
+</section>
 
-<!-- FOOTER -->
+<!-- ══ FOOTER ══ -->
 <footer>
   <strong>北CINEMA</strong> · Book to AI Video Community<br>
-  Nanobanana · ChatGPT · Runway · CapCut 파이프라인<br>
-  <span style="font-size:11px;margin-top:8px;display:block;">영상은 Cloudinary에 저장됩니다 · 데이터는 Supabase에 공유 저장됩니다</span>
+  <span style="font-size:0.75rem;opacity:0.6;">© 2025 · Veo 3.1 · Nanobanana · ChatGPT · CapCut</span>
 </footer>
 
-<!-- UPLOAD MODAL -->
-<div class="modal-overlay" id="uploadModal">
+<!-- ══ UPLOAD MODAL ══ -->
+<div class="modal-overlay" id="upload-modal">
   <div class="modal">
     <button class="modal-close" onclick="closeUploadModal()">✕</button>
-    <h2>🎬 내 작품 올리기</h2>
-    <p class="modal-sub">직접 만든 Book to AI Video를 커뮤니티에 공유하세요</p>
-    <div class="form-group"><label>영상 제목 <span>*</span></label><input type="text" id="inputTitle" placeholder="예: 어린왕자 — 별과 이별하던 날"></div>
-    <div class="form-group"><label>원작 도서 <span>*</span></label><input type="text" id="inputBook" placeholder="예: 어린왕자 (생텍쥐페리)"></div>
+    <h3>🎬 내 작품 올리기</h3>
+    <div class="form-group">
+      <label>책 제목 *</label>
+      <input type="text" id="f-book" placeholder="ex) 채식주의자">
+    </div>
+    <div class="form-group">
+      <label>저자 *</label>
+      <input type="text" id="f-author" placeholder="ex) 한강">
+    </div>
+    <div class="form-group">
+      <label>작품 설명</label>
+      <textarea id="f-desc" placeholder="어떤 장면을 영상으로 만들었나요?"></textarea>
+    </div>
+    <div class="form-group">
+      <label>영상 종류</label>
+      <select id="f-type" onchange="toggleVideoInput()">
+        <option value="youtube">YouTube 링크</option>
+        <option value="cloudinary">직접 업로드 (URL)</option>
+      </select>
+    </div>
+    <div class="form-group" id="yt-group">
+      <label>YouTube 영상 ID</label>
+      <input type="text" id="f-ytid" placeholder="ex) dQw4w9WgXcQ (URL의 v= 뒤 값)">
+    </div>
+    <div class="form-group" id="url-group" style="display:none;">
+      <label>영상 URL (Cloudinary)</label>
+      <input type="text" id="f-url" placeholder="https://res.cloudinary.com/...">
+    </div>
     <div class="form-group">
       <label>장르</label>
-      <select id="inputGenre"><option value="소설">소설</option><option value="시">시</option><option value="에세이">에세이</option><option value="고전">고전</option><option value="기타">기타</option></select>
+      <select id="f-genre">
+        <option value="소설">소설</option>
+        <option value="시">시</option>
+        <option value="에세이">에세이</option>
+        <option value="고전">고전</option>
+        <option value="기타">기타</option>
+      </select>
     </div>
-    <div class="form-group"><label>작가 닉네임 <span>*</span></label><input type="text" id="inputAuthor" placeholder="예: 책읽는곰"></div>
     <div class="form-group">
-      <label>영상 업로드 방식 <span>*</span></label>
-      <div class="upload-tabs">
-        <button class="upload-tab-btn active" onclick="switchUploadTab('file',this)">📁 파일 직접 업로드</button>
-        <button class="upload-tab-btn" onclick="switchUploadTab('youtube',this)">▶️ YouTube 링크</button>
-      </div>
-      <div id="fileUploadArea">
-        <input type="file" id="fileInput" accept="video/mp4,video/mov,video/avi,video/webm,video/quicktime">
-        <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
-          <div class="dz-icon">🎞️</div>
-          <div class="dz-text"><strong>클릭하거나 파일을 드래그</strong>하여 업로드<br>MP4, MOV, AVI, WebM 지원</div>
-          <div class="dz-limit">최대 100MB · Cloudinary 무료 저장</div>
-        </div>
-        <div class="file-preview" id="filePreview">
-          <div class="file-icon">🎬</div>
-          <div class="file-info"><div class="file-name" id="fileName"></div><div class="file-size" id="fileSize"></div></div>
-          <button class="file-remove" onclick="removeFile()">✕</button>
-        </div>
-        <div class="progress-wrap" id="progressWrap">
-          <div class="progress-info"><span id="progressText">업로드 중...</span><span id="progressPercent">0%</span></div>
-          <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
-        </div>
-        <div class="upload-success" id="uploadSuccess">✅ Cloudinary 업로드 완료! 이제 등록 버튼을 눌러주세요.</div>
-      </div>
-      <div id="youtubeUploadArea" style="display:none;">
-        <input type="url" id="inputYoutube" placeholder="https://www.youtube.com/watch?v=...">
-        <div style="font-size:11px;color:var(--sub);margin-top:6px;">YouTube 영상 주소를 붙여넣으세요</div>
-      </div>
+      <label>닉네임</label>
+      <input type="text" id="f-uploader" placeholder="ex) 책읽는고양이">
     </div>
-    <div class="form-group"><label>한줄 소개</label><textarea id="inputDesc" placeholder="어떤 장면을 영상으로 만들었는지 간단히 설명해주세요"></textarea></div>
-    <button class="submit-btn" id="submitBtn" onclick="submitVideo()">🚀 작품 등록하기</button>
+    <button class="form-submit" onclick="submitVideo()">업로드하기</button>
   </div>
 </div>
 
-<!-- VIDEO MODAL -->
-<div class="video-modal" id="videoModal">
-  <div class="video-modal-inner">
-    <button class="video-modal-close" onclick="closeVideoModal()">✕</button>
-    <video id="modalVideoPlayer" controls preload="none" playsinline></video>
-    <div class="video-modal-info">
-      <h3 id="modalVideoTitle"></h3>
-      <p id="modalVideoDesc"></p>
-    </div>
-  </div>
-</div>
-
-<!-- WRITE MODAL -->
-<div class="write-modal" id="writeModal">
+<!-- ══ POST MODAL ══ -->
+<div class="modal-overlay" id="post-modal">
   <div class="modal">
-    <button class="modal-close" onclick="closeWriteModal()">✕</button>
-    <h2>✏️ 게시글 작성</h2>
-    <p class="modal-sub">커뮤니티에 질문, 팁, 소식을 공유하세요</p>
-    <div class="form-group"><label>카테고리</label><select id="postCategory"><option value="tip">TIP</option><option value="qna">Q&amp;A</option><option value="notice">공지</option></select></div>
-    <div class="form-group"><label>제목 <span>*</span></label><input type="text" id="postTitle" placeholder="제목을 입력하세요"></div>
-    <div class="form-group"><label>닉네임 <span>*</span></label><input type="text" id="postAuthor" placeholder="닉네임"></div>
-    <div class="form-group"><label>내용</label><textarea id="postContent" style="height:120px;" placeholder="내용을 입력하세요"></textarea></div>
-    <button class="submit-btn" onclick="submitPost()" style="background:var(--point);color:var(--main);">📤 게시글 등록</button>
+    <button class="modal-close" onclick="closePostModal()">✕</button>
+    <h3>✏️ 글쓰기</h3>
+    <div class="form-group">
+      <label>제목 *</label>
+      <input type="text" id="p-title" placeholder="제목을 입력하세요">
+    </div>
+    <div class="form-group">
+      <label>내용 *</label>
+      <textarea id="p-content" style="min-height:140px;" placeholder="내용을 입력하세요"></textarea>
+    </div>
+    <div class="form-group">
+      <label>닉네임</label>
+      <input type="text" id="p-author" placeholder="ex) 책읽는고양이">
+    </div>
+    <button class="form-submit" onclick="submitPost()">게시하기</button>
   </div>
 </div>
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
+<!-- ══ SCRIPT ══ -->
 <script>
-// ══════════════════════════════════════════════
-//  ⚙️  설정값 (본인 것으로 교체 완료)
-// ══════════════════════════════════════════════
-const CLOUD_NAME    = 'dazangd73';
-const UPLOAD_PRESET = 'Shortform upload';
-const UPLOAD_URL    = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`;
+  // ── Supabase 초기화 ──
+  const { createClient } = supabase;
+  const sb = createClient(
+    'YOUR_SUPABASE_URL',
+    'YOUR_SUPABASE_ANON_KEY'
+  );
 
-const SUPABASE_URL  = 'https://akxrzbnttqkosxkpjgoo.supabase.co';
-const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFreHJ6Ym50dHFrb3N4a3BqZ29vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5ODA4MzYsImV4cCI6MjA5NzU1NjgzNn0.BJmHmo_NkbtMqwj8cXBN0N2p8MMDXWCbyy4Qs_rWQDE';
+  // ── 상태 ──
+  let allVideos = [];
+  let currentFilter = 'all';
+  const SESSION_ID = 'user_' + Math.random().toString(36).substr(2, 9);
 
-// ══════════════════════════════════════════════
-//  🗄️  Supabase 클라이언트 초기화
-// ══════════════════════════════════════════════
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ══════════════════════════════════════════════
-//  상태값
-// ══════════════════════════════════════════════
-let selectedFile     = null;
-let uploadedVideoUrl = null;
-let currentFilter    = 'all';
-let allVideos        = [];   // 캐시
-
-// ── UID (브라우저 고유 사용자 식별) ──
-function getUID() {
-  let uid = localStorage.getItem('bookcinema_uid');
-  if (!uid) { uid = 'u_' + Math.random().toString(36).substr(2,9); localStorage.setItem('bookcinema_uid', uid); }
-  return uid;
-}
-
-// ══════════════════════════════════════════════
-//  📡  Supabase CRUD
-// ══════════════════════════════════════════════
-
-// 영상 전체 조회
-async function fetchVideos() {
-  const { data, error } = await db.from('videos').select('*').order('created_at', { ascending: false });
-  if (error) { console.error('fetchVideos:', error); return []; }
-  return data || [];
-}
-
-// 영상 저장
-async function insertVideo(entry) {
-  const { data, error } = await db.from('videos').insert(entry).select().single();
-  if (error) throw error;
-  return data;
-}
-
-// 좋아요 업데이트
-async function updateLike(id, likes, likedBy) {
-  const { error } = await db.from('videos').update({ likes, liked_by: likedBy }).eq('id', id);
-  if (error) throw error;
-}
-
-// 게시글 전체 조회
-async function fetchPosts() {
-  const { data, error } = await db.from('posts').select('*').order('created_at', { ascending: false });
-  if (error) { console.error('fetchPosts:', error); return defaultPosts(); }
-  return data && data.length > 0 ? data : defaultPosts();
-}
-
-// 게시글 저장
-async function insertPost(entry) {
-  const { error } = await db.from('posts').insert(entry);
-  if (error) throw error;
-}
-
-function defaultPosts() {
-  return [
-    { id:1, category:'notice', title:'북시네마 커뮤니티 오픈을 환영합니다! 🎉',       author:'운영자',    created_at: new Date().toISOString() },
-    { id:2, category:'tip',    title:'Runway 무료 크레딧 알뜰하게 쓰는 법 💡',       author:'무비북',    created_at: new Date().toISOString() },
-    { id:3, category:'qna',    title:'CapCut에서 자막 폰트 어떤 걸 쓰세요?',         author:'책읽는늑대', created_at: new Date().toISOString() },
-    { id:4, category:'tip',    title:'Nanobanana 프롬프트 영문 vs 한글 비교 실험',   author:'페이지터너', created_at: new Date().toISOString() },
-  ];
-}
-
-// ══════════════════════════════════════════════
-//  🗂️  섹션 전환
-// ══════════════════════════════════════════════
-function showSection(name) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-  document.getElementById('section-' + name).classList.add('active');
-  document.getElementById('nav-' + name).classList.add('active');
-  if (name === 'home')      renderHome();
-  if (name === 'gallery')   renderGallery();
-  if (name === 'community') renderCommunity();
-  window.scrollTo({ top:0, behavior:'smooth' });
-}
-
-// ══════════════════════════════════════════════
-//  🃏  카드 렌더
-// ══════════════════════════════════════════════
-function makeThumb(v) {
-  if (v.type === 'youtube' && v.yt_id) {
-    return `![${escHtml(v.title)}](https://img.youtube.com/vi/${v.yt_id}/hqdefault.jpg)`;
+  // ════════════════════════
+  //  VIDEOS
+  // ════════════════════════
+  async function loadVideos() {
+    const { data, error } = await sb.from('videos')
+      .select('*').order('created_at', { ascending: false });
+    if (error) { console.error(error); return; }
+    allVideos = data || [];
+    renderGallery();
+    renderRecent();
+    renderPopular();
+    updateStats();
   }
-  return `<div class="video-thumb-placeholder"><div class="play-icon">▶</div><span>${escHtml(v.genre||'영상')}</span></div>`;
-}
 
-function makeCard(v) {
-  const initial = (v.author||'?').charAt(0).toUpperCase();
-  const likedBy = v.liked_by || [];
-  const liked   = likedBy.includes(getUID());
-  const dateStr = v.created_at ? new Date(v.created_at).toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\. /g,'.').replace(/\.$/,'') : '';
-  return `
-  <div class="video-card" onclick="playVideo('${v.id}')">
-    ${makeThumb(v)}
-    <div class="card-body">
-      <div class="card-meta">
-        <span class="card-genre">${escHtml(v.genre||'기타')}</span>
-        <span class="card-date">${dateStr}</span>
-      </div>
-      <div class="card-title">${escHtml(v.title)}</div>
-      <div class="card-book">원작: <span>${escHtml(v.book||'')}</span></div>
-      <div class="card-footer">
-        <div class="card-author"><div class="avatar">${initial}</div>${escHtml(v.author||'익명')}</div>
-        <div class="card-actions">
-          <button class="action-btn ${liked?'liked':''}" onclick="toggleLike(event,'${v.id}')">
-            ${liked?'❤️':'🤍'} ${v.likes||0}
-          </button>
+  function renderGallery() {
+    const grid = document.getElementById('gallery-grid');
+    const filtered = currentFilter === 'all'
+      ? allVideos
+      : allVideos.filter(v => v.genre === currentFilter);
+    if (!filtered.length) {
+      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🎞️</div><p>아직 작품이 없어요. 첫 번째 작품을 올려보세요!</p></div>';
+      return;
+    }
+    grid.innerHTML = filtered.map(v => videoCard(v)).join('');
+  }
+
+  function renderRecent() {
+    const el = document.getElementById('recent-videos');
+    const recent = allVideos.slice(0, 4);
+    if (!recent.length) {
+      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🎞️</div><p>아직 작품이 없습니다.</p></div>';
+      return;
+    }
+    el.innerHTML = recent.map(v => videoCard(v)).join('');
+  }
+
+  function renderPopular() {
+    const el = document.getElementById('popular-list');
+    const top = [...allVideos].sort((a,b)=>(b.likes||0)-(a.likes||0)).slice(0,3);
+    if (!top.length) { el.innerHTML = '<p style="font-size:0.8rem;color:var(--muted);">아직 작품이 없어요.</p>'; return; }
+    el.innerHTML = top.map(v => `
+      <div style="padding:0.5rem 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.5rem;">
+        <span style="font-size:0.9rem;">❤️ ${v.likes||0}</span>
+        <span style="font-size:0.82rem;color:var(--ink);">${v.book||'무제'}</span>
+        <span style="font-size:0.75rem;color:var(--muted);">· ${v.author||''}</span>
+      </div>`).join('');
+  }
+
+  function videoCard(v) {
+    const liked = (v.liked_by||[]).includes(SESSION_ID);
+    const thumb = v.type === 'youtube' && v.yt_id
+      ? `<iframe src="https://www.youtube.com/embed/${v.yt_id}?mute=1&rel=0" frameborder="0" allowfullscreen></iframe>`
+      : v.url
+        ? `<video src="${v.url}" muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0"></video>`
+        : `<div class="video-thumb-placeholder">🎬</div>`;
+    return `
+    <div class="video-card" id="vc-${v.id}">
+      <div class="video-thumb">${thumb}</div>
+      <div class="video-info">
+        <div class="video-book">${v.book||'무제'}</div>
+        <div class="video-author">${v.author ? '저. '+v.author : ''}</div>
+        ${v.description ? `<p style="font-size:0.8rem;color:var(--muted);margin-top:0.3rem;">${v.description}</p>` : ''}
+        <div class="video-meta">
+          <div class="video-actions">
+            <button class="like-btn ${liked?'liked':''}" onclick="toggleLike('${v.id}', this)">
+              ${liked?'❤️':'🤍'} ${v.likes||0}
+            </button>
+            <button class="delete-btn" onclick="deleteVideo('${v.id}')">🗑️ 삭제</button>
+          </div>
+          <span class="video-uploader">@${v.uploader||'익명'}</span>
         </div>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ══════════════════════════════════════════════
-//  🏠  홈 렌더
-// ══════════════════════════════════════════════
-async function renderHome() {
-  const grid = document.getElementById('home-grid');
-  grid.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
-  allVideos = await fetchVideos();
-
-  document.getElementById('stat-videos').textContent = allVideos.length;
-  document.getElementById('stat-likes').textContent  = allVideos.reduce((s,v) => s+(v.likes||0), 0);
-
-  const recent = allVideos.slice(0, 3);
-  grid.innerHTML = recent.length === 0
-    ? `<div class="empty-state"><div class="empty-icon">🎬</div><h3>아직 업로드된 작품이 없어요</h3><p>첫 번째 북시네마 영상을 올려보세요!</p></div>`
-    : recent.map(makeCard).join('');
-}
-
-// ══════════════════════════════════════════════
-//  🖼️  갤러리 렌더
-// ══════════════════════════════════════════════
-async function renderGallery() {
-  const grid = document.getElementById('gallery-grid');
-  grid.innerHTML = '<div class="loading-state">⏳ 불러오는 중...</div>';
-  allVideos = await fetchVideos();
-
-  const filtered = currentFilter === 'all' ? allVideos : allVideos.filter(v => v.genre === currentFilter);
-  grid.innerHTML = filtered.length === 0
-    ? `<div class="empty-state"><div class="empty-icon">🎞️</div><h3>아직 작품이 없어요</h3><p>첫 번째 작품을 올려보세요!</p></div>`
-    : filtered.map(makeCard).join('');
-}
-
-function filterGallery(genre, btn) {
-  currentFilter = genre;
-  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  renderGallery();
-}
-
-// ══════════════════════════════════════════════
-//  💬  커뮤니티 렌더
-// ══════════════════════════════════════════════
-async function renderCommunity() {
-  const posts    = await fetchPosts();
-  const badgeMap = { notice:'공지', tip:'TIP', qna:'Q&A' };
-  const classMap = { notice:'badge-notice', tip:'badge-tip', qna:'badge-qna' };
-
-  document.getElementById('board-list').innerHTML = posts.map(p => {
-    const dateStr = p.created_at ? new Date(p.created_at).toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}).replace(/\. /g,'.').replace(/\.$/,'') : '';
-    return `<div class="board-item">
-      <span class="board-badge ${classMap[p.category]||'badge-tip'}">${badgeMap[p.category]||'TIP'}</span>
-      <div class="board-content">
-        <div class="board-title">${escHtml(p.title)}</div>
-        <div class="board-meta">${escHtml(p.author)} · ${dateStr}</div>
       </div>
     </div>`;
-  }).join('');
-
-  // 인기 작품 사이드바
-  if (allVideos.length === 0) allVideos = await fetchVideos();
-  const popular = [...allVideos].sort((a,b) => (b.likes||0)-(a.likes||0)).slice(0,5);
-  const medals  = ['🥇','🥈','🥉','4️⃣','5️⃣'];
-  document.getElementById('popular-list').innerHTML = popular.length === 0
-    ? '<div style="font-size:13px;color:var(--sub);padding:8px 0;">아직 작품이 없어요</div>'
-    : popular.map((v,i) => `<div class="rank-item">
-        <div class="rank-num">${medals[i]}</div>
-        <div class="rank-text">
-          <div class="rank-title">${escHtml(v.title)}</div>
-          <div class="rank-views">❤️ ${v.likes||0} · ${escHtml(v.author||'')}</div>
-        </div>
-      </div>`).join('');
-}
-
-// ══════════════════════════════════════════════
-//  ▶️  영상 재생 모달
-// ══════════════════════════════════════════════
-function playVideo(id) {
-  const v = allVideos.find(x => String(x.id) === String(id));
-  if (!v) return;
-
-  document.getElementById('modalVideoTitle').textContent = v.title;
-  document.getElementById('modalVideoDesc').textContent  = `📖 ${v.book||''} · 🎨 ${v.author||''}`;
-
-  const player   = document.getElementById('modalVideoPlayer');
-  const oldFrame = document.getElementById('ytFrame');
-  if (oldFrame) oldFrame.remove();
-
-  if (v.type === 'youtube' && v.yt_id) {
-    player.style.display = 'none';
-    const iframe = document.createElement('iframe');
-    iframe.id    = 'ytFrame';
-    iframe.src   = `https://www.youtube.com/embed/${v.yt_id}?autoplay=1`;
-    iframe.allow = 'autoplay; fullscreen';
-    iframe.style.cssText = 'width:100%;aspect-ratio:16/9;display:block;border:none;';
-    player.parentNode.insertBefore(iframe, player);
-  } else if (v.video_url || v.url) {
-    player.style.display = 'block';
-    player.src = v.video_url || v.url;
-    player.play();
   }
-  document.getElementById('videoModal').classList.add('open');
-}
 
-function closeVideoModal() {
-  document.getElementById('videoModal').classList.remove('open');
-  const player = document.getElementById('modalVideoPlayer');
-  player.pause(); player.src = '';
-  const frame = document.getElementById('ytFrame');
-  if (frame) frame.remove();
-  player.style.display = 'block';
-}
-
-// ══════════════════════════════════════════════
-//  📤  업로드 모달
-// ══════════════════════════════════════════════
-function openUploadModal()  { document.getElementById('uploadModal').classList.add('open'); }
-function closeUploadModal() { document.getElementById('uploadModal').classList.remove('open'); resetForm(); }
-
-function resetForm() {
-  ['inputTitle','inputBook','inputAuthor','inputDesc','inputYoutube'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
-  });
-  document.getElementById('inputGenre').value = '소설';
-  removeFile();
-  document.getElementById('uploadSuccess').classList.remove('show');
-  uploadedVideoUrl = null;
-  document.querySelectorAll('.upload-tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
-  document.getElementById('fileUploadArea').style.display    = 'block';
-  document.getElementById('youtubeUploadArea').style.display = 'none';
-}
-
-function switchUploadTab(type, btn) {
-  document.querySelectorAll('.upload-tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('fileUploadArea').style.display    = type==='file'    ? 'block':'none';
-  document.getElementById('youtubeUploadArea').style.display = type==='youtube' ? 'block':'none';
-}
-
-function handleDragOver(e)  { e.preventDefault(); document.getElementById('dropzone').classList.add('dragover'); }
-function handleDragLeave()  { document.getElementById('dropzone').classList.remove('dragover'); }
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('dropzone').classList.remove('dragover');
-  if (e.dataTransfer.files[0]) handleFileSelect(e.dataTransfer.files[0]);
-}
-
-function handleFileSelect(file) {
-  const valid = ['video/mp4','video/quicktime','video/avi','video/webm','video/x-msvideo'];
-  if (!valid.includes(file.type) && !/\.(mp4|mov|avi|webm)$/i.test(file.name)) {
-    alert('MP4, MOV, AVI, WebM 형식만 가능합니다.'); return;
+  function updateStats() {
+    document.getElementById('stat-videos').textContent = allVideos.length;
+    const totalLikes = allVideos.reduce((s,v)=>s+(v.likes||0),0);
+    document.getElementById('stat-likes').textContent = totalLikes;
   }
-  if (file.size > 100 * 1024 * 1024) { alert('100MB 이하 파일만 업로드 가능합니다.'); return; }
-  selectedFile = file;
-  document.getElementById('fileName').textContent = file.name;
-  document.getElementById('fileSize').textContent = formatSize(file.size);
-  document.getElementById('filePreview').classList.add('show');
-  document.getElementById('dropzone').style.display = 'none';
-}
 
-function removeFile() {
-  selectedFile = null; uploadedVideoUrl = null;
-  document.getElementById('fileInput').value = '';
-  document.getElementById('filePreview').classList.remove('show');
-  document.getElementById('dropzone').style.display = 'block';
-  document.getElementById('progressWrap').classList.remove('show');
-  document.getElementById('uploadSuccess').classList.remove('show');
-  setProgress(0,'');
-}
+  function filterGallery(genre) {
+    currentFilter = genre;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    renderGallery();
+  }
 
-function setProgress(pct, label) {
-  document.getElementById('progressFill').style.width    = pct + '%';
-  document.getElementById('progressPercent').textContent = pct + '%';
-  document.getElementById('progressText').textContent    = label || '업로드 중...';
-}
+  // ── 좋아요 ──
+  async function toggleLike(id, btn) {
+    const video = allVideos.find(v => v.id == id);
+    if (!video) return;
+    const liked = (video.liked_by||[]).includes(SESSION_ID);
+    const newLikedBy = liked
+      ? video.liked_by.filter(u => u !== SESSION_ID)
+      : [...(video.liked_by||[]), SESSION_ID];
+    const newLikes = newLikedBy.length;
+    const { error } = await sb.from('videos').update({ likes: newLikes, liked_by: newLikedBy }).eq('id', id);
+    if (!error) { video.likes = newLikes; video.liked_by = newLikedBy; loadVideos(); }
+  }
 
-function formatSize(b) {
-  return b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB';
-}
-
-// ── Cloudinary 업로드 ──
-function uploadToCloudinary(file) {
-  return new Promise((resolve, reject) => {
-    const fd = new FormData();
-    fd.append('file', file);
-    fd.append('upload_preset', UPLOAD_PRESET);
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', UPLOAD_URL, true);
-    xhr.upload.addEventListener('progress', e => {
-      if (e.lengthComputable) setProgress(Math.round(e.loaded/e.total*100), '업로드 중...');
-    });
-    xhr.addEventListener('load', () => {
-      if (xhr.status === 200) { resolve(JSON.parse(xhr.responseText).secure_url); }
-      else { try { reject(new Error(JSON.parse(xhr.responseText).error?.message||'업로드 실패')); } catch { reject(new Error('업로드 실패 ('+xhr.status+')')); } }
-    });
-    xhr.addEventListener('error', () => reject(new Error('네트워크 오류')));
-    xhr.send(fd);
-  });
-}
-
-// ── 영상 등록 ──
-async function submitVideo() {
-  const title  = document.getElementById('inputTitle').value.trim();
-  const book   = document.getElementById('inputBook').value.trim();
-  const author = document.getElementById('inputAuthor').value.trim();
-  const genre  = document.getElementById('inputGenre').value;
-  const desc   = document.getElementById('inputDesc').value.trim();
-  const ytUrl  = document.getElementById('inputYoutube').value.trim();
-  const isFile = document.getElementById('fileUploadArea').style.display !== 'none';
-
-  if (!title)  { alert('영상 제목을 입력해주세요.'); return; }
-  if (!book)   { alert('원작 도서를 입력해주세요.'); return; }
-  if (!author) { alert('닉네임을 입력해주세요.'); return; }
-  if (isFile && !selectedFile && !uploadedVideoUrl) { alert('영상 파일을 선택해주세요.'); return; }
-  if (!isFile && !ytUrl) { alert('YouTube 링크를 입력해주세요.'); return; }
-
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = true; btn.innerHTML = '⏳ 처리 중...';
-
-  let entry = { title, book, author, genre, description: desc, likes: 0, liked_by: [] };
-
-  if (isFile) {
-    if (selectedFile && !uploadedVideoUrl) {
-      document.getElementById('progressWrap').classList.add('show');
-      try {
-        uploadedVideoUrl = await uploadToCloudinary(selectedFile);
-        setProgress(100, '업로드 완료!');
-        document.getElementById('uploadSuccess').classList.add('show');
-      } catch(err) {
-        alert('업로드 실패: ' + err.message);
-        btn.disabled = false; btn.innerHTML = '🚀 작품 등록하기';
-        return;
-      }
+  // ── 갤러리 삭제 ──
+  async function deleteVideo(id) {
+    if (!confirm('이 작품을 삭제하시겠습니까?')) return;
+    const { error } = await sb.from('videos').delete().eq('id', id);
+    if (error) {
+      alert('삭제 중 오류가 발생했습니다: ' + error.message);
+    } else {
+      alert('삭제되었습니다.');
+      loadVideos();
     }
-    entry.type      = 'cloudinary';
-    entry.video_url = uploadedVideoUrl;
-  } else {
-    entry.type   = 'youtube';
-    entry.yt_id  = extractYouTubeId(ytUrl);
-    entry.video_url = ytUrl;
   }
 
-  try {
-    await insertVideo(entry);
-    closeUploadModal();
-    showToast('🎉 작품이 갤러리에 등록되었습니다!');
-    showSection('gallery');
-  } catch(err) {
-    alert('등록 실패: ' + err.message);
+  // ── 업로드 ──
+  function openUploadModal() { document.getElementById('upload-modal').classList.add('open'); }
+  function closeUploadModal() { document.getElementById('upload-modal').classList.remove('open'); }
+  function toggleVideoInput() {
+    const t = document.getElementById('f-type').value;
+    document.getElementById('yt-group').style.display = t==='youtube'?'block':'none';
+    document.getElementById('url-group').style.display = t==='cloudinary'?'block':'none';
   }
 
-  btn.disabled = false; btn.innerHTML = '🚀 작품 등록하기';
-}
+  async function submitVideo() {
+    const book = document.getElementById('f-book').value.trim();
+    const author = document.getElementById('f-author').value.trim();
+    const desc = document.getElementById('f-desc').value.trim();
+    const type = document.getElementById('f-type').value;
+    const ytId = document.getElementById('f-ytid').value.trim();
+    const url = document.getElementById('f-url').value.trim();
+    const genre = document.getElementById('f-genre').value;
+    const uploader = document.getElementById('f-uploader').value.trim() || '익명';
 
-// ══════════════════════════════════════════════
-//  ❤️  좋아요
-// ══════════════════════════════════════════════
-async function toggleLike(e, id) {
-  e.stopPropagation();
-  const v = allVideos.find(x => String(x.id) === String(id));
-  if (!v) return;
-  const uid     = getUID();
-  const likedBy = Array.isArray(v.liked_by) ? [...v.liked_by] : [];
-  let likes     = v.likes || 0;
+    if (!book) { alert('책 제목을 입력해주세요.'); return; }
 
-  if (likedBy.includes(uid)) { likedBy.splice(likedBy.indexOf(uid),1); likes = Math.max(0, likes-1); }
-  else                       { likedBy.push(uid); likes++; }
+    const payload = { book, author, description: desc, type, genre, uploader, likes: 0, liked_by: [] };
+    if (type === 'youtube') payload.yt_id = ytId;
+    else payload.url = url;
 
-  // 낙관적 업데이트 (즉각 UI 반영)
-  v.liked_by = likedBy; v.likes = likes;
-  const activeSection = document.querySelector('.section.active')?.id?.replace('section-','');
-  if (activeSection === 'gallery') renderGalleryFromCache();
-  else if (activeSection === 'home') renderHomeFromCache();
-
-  try { await updateLike(id, likes, likedBy); }
-  catch(err) { console.error('좋아요 업데이트 실패:', err); }
-}
-
-function renderGalleryFromCache() {
-  const grid     = document.getElementById('gallery-grid');
-  const filtered = currentFilter === 'all' ? allVideos : allVideos.filter(v => v.genre === currentFilter);
-  grid.innerHTML = filtered.length === 0
-    ? `<div class="empty-state"><div class="empty-icon">🎞️</div><h3>아직 작품이 없어요</h3></div>`
-    : filtered.map(makeCard).join('');
-}
-
-function renderHomeFromCache() {
-  const grid = document.getElementById('home-grid');
-  document.getElementById('stat-videos').textContent = allVideos.length;
-  document.getElementById('stat-likes').textContent  = allVideos.reduce((s,v)=>s+(v.likes||0),0);
-  const recent = allVideos.slice(0,3);
-  grid.innerHTML = recent.length === 0
-    ? `<div class="empty-state"><div class="empty-icon">🎬</div><h3>아직 업로드된 작품이 없어요</h3></div>`
-    : recent.map(makeCard).join('');
-}
-
-// ══════════════════════════════════════════════
-//  💬  커뮤니티 글쓰기
-// ══════════════════════════════════════════════
-function openWriteModal()  { document.getElementById('writeModal').classList.add('open'); }
-function closeWriteModal() { document.getElementById('writeModal').classList.remove('open'); }
-
-async function submitPost() {
-  const title    = document.getElementById('postTitle').value.trim();
-  const author   = document.getElementById('postAuthor').value.trim();
-  const category = document.getElementById('postCategory').value;
-  const content  = document.getElementById('postContent').value.trim();
-  if (!title)  { alert('제목을 입력해주세요.'); return; }
-  if (!author) { alert('닉네임을 입력해주세요.'); return; }
-
-  try {
-    await insertPost({ title, author, category, content });
-    closeWriteModal();
-    showToast('📌 게시글이 등록되었습니다!');
-    renderCommunity();
-  } catch(err) {
-    alert('등록 실패: ' + err.message + '\n\nSupabase posts 테이블을 확인해주세요.');
+    const { error } = await sb.from('videos').insert([payload]);
+    if (error) {
+      alert('업로드 실패: ' + error.message);
+    } else {
+      alert('업로드 완료! 🎉');
+      closeUploadModal();
+      loadVideos();
+    }
   }
-}
 
-// ══════════════════════════════════════════════
-//  🔔  토스트 알림
-// ══════════════════════════════════════════════
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
+  // ════════════════════════
+  //  POSTS (커뮤니티 게시판)
+  // ════════════════════════
+  async function loadPosts() {
+    const { data, error } = await sb.from('posts')
+      .select('*').order('created_at', { ascending: false }).limit(20);
+    if (error) {
+      document.getElementById('posts-list').innerHTML =
+        '<p style="color:var(--muted);font-size:0.85rem;padding:1rem 0;">게시판 테이블을 준비 중입니다.</p>';
+      return;
+    }
+    const el = document.getElementById('posts-list');
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="empty-state" style="padding:2rem 0;"><p>첫 번째 글을 작성해보세요!</p></div>';
+      return;
+    }
+    el.innerHTML = data.map(p => `
+      <div class="post-item" id="pi-${p.id}">
+        <div class="post-item-left">
+          <div class="post-title">${p.title||'(제목 없음)'}</div>
+          <div class="post-meta">@${p.author||'익명'} · ${new Date(p.created_at).toLocaleDateString('ko-KR')}</div>
+        </div>
+        <button class="post-delete-btn" onclick="deletePost('${p.id}')">🗑️ 삭제</button>
+      </div>`).join('');
+  }
 
-// ══════════════════════════════════════════════
-//  🛠️  유틸
-// ══════════════════════════════════════════════
-function extractYouTubeId(url) {
-  const m = url.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
-  return m ? m[1] : null;
-}
+  // ── 게시글 삭제 ──
+  async function deletePost(id) {
+    if (!confirm('이 게시글을 삭제하시겠습니까?')) return;
+    const { error } = await sb.from('posts').delete().eq('id', id);
+    if (error) {
+      alert('삭제 중 오류가 발생했습니다: ' + error.message);
+    } else {
+      alert('삭제되었습니다.');
+      loadPosts();
+    }
+  }
 
-function escHtml(str) {
-  if (!str) return '';
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+  function openPostModal() { document.getElementById('post-modal').classList.add('open'); }
+  function closePostModal() { document.getElementById('post-modal').classList.remove('open'); }
 
-// ══════════════════════════════════════════════
-//  🚀  초기화
-// ══════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('fileInput').addEventListener('change', e => {
-    if (e.target.files[0]) handleFileSelect(e.target.files[0]);
+  async function submitPost() {
+    const title = document.getElementById('p-title').value.trim();
+    const content = document.getElementById('p-content').value.trim();
+    const author = document.getElementById('p-author').value.trim() || '익명';
+    if (!title) { alert('제목을 입력해주세요.'); return; }
+    const { error } = await sb.from('posts').insert([{ title, content, author }]);
+    if (error) {
+      alert('게시 실패: ' + error.message);
+    } else {
+      alert('게시되었습니다! ✅');
+      closePostModal();
+      loadPosts();
+    }
+  }
+
+  // ── 모달 외부 클릭 닫기 ──
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
   });
-  // 모달 바깥 클릭 닫기
-  document.getElementById('uploadModal').addEventListener('click', e => { if (e.target.id==='uploadModal') closeUploadModal(); });
-  document.getElementById('videoModal').addEventListener('click',  e => { if (e.target.id==='videoModal')  closeVideoModal(); });
-  document.getElementById('writeModal').addEventListener('click',  e => { if (e.target.id==='writeModal')  closeWriteModal(); });
 
-  renderHome();
-});
+  // ── 초기 로드 ──
+  loadVideos();
+  loadPosts();
 </script>
 </body>
 </html>
