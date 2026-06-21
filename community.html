@@ -149,7 +149,7 @@
 
 <script>
   const { createClient } = supabase;
-  const sb = createClient('https://akxrzbnttqkosxkpjgoo.supabase.co/rest/v1/', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFreHJ6Ym50dHFrb3N4a3BqZ29vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5ODA4MzYsImV4cCI6MjA5NzU1NjgzNn0.BJmHmo_NkbtMqwj8cXBN0N2p8MMDXWCbyy4Qs_rWQDE');
+  const sb = createClient('https://akxrzbnttqkosxkpjgoo.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFreHJ6Ym50dHFrb3N4a3BqZ29vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5ODA4MzYsImV4cCI6MjA5NzU1NjgzNn0.BJmHmo_NkbtMqwj8cXBN0N2p8MMDXWCbyy4Qs_rWQDE');
 
   async function loadPosts() {
     const { data, error } = await sb.from('posts').select('*').order('created_at', { ascending: false }).limit(30);
