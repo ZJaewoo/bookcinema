@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>STEP 3 · Veo 3.1 — 北CINEMA</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #1a1209; --paper: #faf7f2; --cream: #f5f0e8;
+      --gold: #c9a84c; --gold-light: #e8c96a; --muted: #8a7560;
+      --border: #d4c9b8; --card-bg: #fffdf9;
+      --shadow: 0 2px 16px rgba(26,18,9,0.10);
+    }
+    body { font-family: 'Georgia', 'Batang', serif; background: var(--paper); color: var(--ink); line-height: 1.7; }
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(250,247,242,0.96); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 58px; }
+    .nav-logo { font-size: 1.15rem; font-weight: 700; letter-spacing: 2px; color: var(--ink); text-decoration: none; }
+    .nav-logo span { color: var(--gold); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { font-size: 0.82rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--gold); }
+    .step-progress { background: var(--cream); border-bottom: 1px solid var(--border); padding: 1rem 2.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .sp-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--muted); text-decoration: none; padding: 0.3rem 0.6rem; border-radius: 4px; transition: color 0.2s; }
+    .sp-item:hover { color: var(--gold); }
+    .sp-item.active { color: var(--ink); font-weight: 700; }
+    .sp-item .sp-num { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 700; background: var(--border); color: var(--muted); }
+    .sp-item.active .sp-num { background: var(--gold); color: #fff; }
+    .sp-item.done .sp-num { background: var(--ink); color: var(--gold); }
+    .sp-arrow { color: var(--border); font-size: 0.9rem; }
+    .guide-hero { background: linear-gradient(120deg, #0a1628 0%, #1a2a4a 50%, #0d3060 100%); color: var(--paper); padding: 4rem 2.5rem 3rem; text-align: center; }
+    .guide-hero .step-tag { font-size: 0.72rem; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 0.8rem; display: block; }
+    .guide-hero h1 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 400; margin-bottom: 0.8rem; }
+    .guide-hero h1 em { color: var(--gold); font-style: italic; }
+    .guide-hero p { color: rgba(250,247,242,0.7); font-size: 0.95rem; max-width: 500px; margin: 0 auto 2rem; }
+    .hero-icon { font-size: 4rem; margin-bottom: 1rem; display: block; }
+    .site-btn { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--gold); color: var(--ink); padding: 0.7rem 1.6rem; border-radius: 4px; font-size: 0.88rem; font-weight: 700; text-decoration: none; transition: background 0.2s; }
+    .site-btn:hover { background: var(--gold-light); }
+    .guide-content { max-width: 820px; margin: 0 auto; padding: 3.5rem 1.5rem; }
+    .overview-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem 2rem; margin-bottom: 2.5rem; box-shadow: var(--shadow); }
+    .overview-box h2 { font-size: 1rem; color: var(--ink); margin-bottom: 0.8rem; }
+    .overview-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .overview-list li { font-size: 0.88rem; color: var(--muted); display: flex; gap: 0.6rem; align-items: flex-start; }
+    .overview-list li::before { content: '✓'; color: var(--gold); font-weight: 700; flex-shrink: 0; }
+    /* Veo 특징 카드 */
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2.5rem; }
+    .feature-chip { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; text-align: center; }
+    .feature-chip .fc-icon { font-size: 1.5rem; margin-bottom: 0.4rem; }
+    .feature-chip h4 { font-size: 0.82rem; color: var(--ink); margin-bottom: 0.2rem; }
+    .feature-chip p { font-size: 0.75rem; color: var(--muted); }
+    .steps-list { display: flex; flex-direction: column; gap: 1.5rem; }
+    .step-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; display: flex; overflow: hidden; box-shadow: var(--shadow); }
+    .step-num-col { width: 64px; flex-shrink: 0; background: var(--ink); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 700; }
+    .step-body { padding: 1.4rem 1.6rem; flex: 1; }
+    .step-body h3 { font-size: 0.98rem; color: var(--ink); margin-bottom: 0.4rem; }
+    .step-body p { font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
+    .step-body .code-block { margin-top: 0.7rem; background: #1e1610; color: #e8c96a; border-radius: 6px; padding: 0.7rem 1rem; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.5; }
+    .tip-box { background: #fff8e8; border: 1px solid #e8d090; border-radius: 8px; padding: 1rem 1.3rem; margin-top: 2rem; font-size: 0.85rem; color: #7a5c1e; display: flex; gap: 0.6rem; }
+    .info-box { background: #f0f8ff; border: 1px solid #b0d4f0; border-radius: 8px; padding: 1rem 1.3rem; margin-bottom: 2rem; font-size: 0.85rem; color: #1a4a7a; display: flex; gap: 0.6rem; }
+    .guide-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 1rem; }
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.5rem; font-size: 0.85rem; letter-spacing: 0.5px; border-radius: 4px; cursor: pointer; transition: all 0.2s; text-decoration: none; border: none; font-family: inherit; }
+    .btn-primary { background: var(--ink); color: var(--paper); }
+    .btn-primary:hover { background: var(--gold); color: var(--ink); }
+    .btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+    footer { background: var(--ink); color: rgba(250,247,242,0.55); text-align: center; padding: 2rem 1.5rem; font-size: 0.8rem; }
+    footer strong { color: var(--gold); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="../index.html">北<span>CINEMA</span></a>
+  <ul class="nav-links">
+    <li><a href="step1.html">AI 영상 만들기</a></li>
+    <li><a href="../gallery.html">갤러리</a></li>
+    <li><a href="../community.html">커뮤니티</a></li>
+  </ul>
+</nav>
+
+<div class="step-progress">
+  <a href="step1.html" class="sp-item done"><span class="sp-num">✓</span> Nanobanana</a>
+  <span class="sp-arrow">›</span>
+  <a href="step2.html" class="sp-item done"><span class="sp-num">✓</span> ChatGPT</a>
+  <span class="sp-arrow">›</span>
+  <a href="step3.html" class="sp-item active"><span class="sp-num">3</span> Veo 3.1</a>
+  <span class="sp-arrow">›</span>
+  <a href="step4.html" class="sp-item"><span class="sp-num">4</span> CapCut</a>
+</div>
+
+<div class="guide-hero">
+  <span class="step-tag">STEP 3 of 4 · AI 영상 생성</span>
+  <span class="hero-icon">🎬</span>
+  <h1>Google <em>Veo 3.1</em>로<br>이미지를 영상으로</h1>
+  <p>Google DeepMind의 최신 영상 생성 모델—<br>이미지와 프롬프트로 영화 같은 클립을 만듭니다.</p>
+  <a href="https://labs.google/flow" target="_blank" class="site-btn">🔗 Google Flow 바로가기</a>
+</div>
+
+<div class="guide-content">
+
+  <!-- Veo 3.1 특징 -->
+  <div class="feature-grid">
+    <div class="feature-chip">
+      <div class="fc-icon">🎵</div>
+      <h4>자동 오디오 생성</h4>
+      <p>배경음 & 음향효과 자동 합성</p>
+    </div>
+    <div class="feature-chip">
+      <div class="fc-icon">🏃</div>
+      <h4>자연스러운 움직임</h4>
+      <p>물리 법칙을 이해하는 모션</p>
+    </div>
+    <div class="feature-chip">
+      <div class="fc-icon">📐</div>
+      <h4>카메라 제어</h4>
+      <p>정밀한 카메라 무브먼트</p>
+    </div>
+    <div class="feature-chip">
+      <div class="fc-icon">🎞️</div>
+      <h4>1080p 출력</h4>
+      <p>고화질 영상 다운로드</p>
+    </div>
+  </div>
+
+  <div class="info-box">ℹ️ <span><strong>접속 방법:</strong> Veo 3.1은 Google Flow(구 VideoFX)를 통해 사용합니다. Google 계정이 필요하며, <strong>Google One AI Premium</strong> 구독 또는 waitlist 신청 후 이용 가능합니다.</span></div>
+
+  <div class="overview-box">
+    <h2>📋 이 단계에서 할 일</h2>
+    <ul class="overview-list">
+      <li>Google Flow에 접속해 Veo 3.1 모델을 선택합니다</li>
+      <li>Nanobanana 이미지를 업로드합니다 (Image-to-Video)</li>
+      <li>ChatGPT 프롬프트를 입력합니다</li>
+      <li>영상을 생성하고 최적의 클립을 저장합니다</li>
+      <li>3~5개 장면의 클립을 반복 생성합니다</li>
+    </ul>
+  </div>
+
+  <div class="steps-list">
+
+    <div class="step-card">
+      <div class="step-num-col">1</div>
+      <div class="step-body">
+        <h3>Google Flow 접속 및 로그인</h3>
+        <p>위 버튼으로 <strong>labs.google/flow</strong>에 접속합니다. Google 계정으로 로그인 후 Veo 3.1이 활성화되어 있는지 확인합니다.<br>
+        처음 접속이면 waitlist 신청 페이지가 나타날 수 있으며, 승인까지 수 시간~수 일이 소요될 수 있습니다.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">2</div>
+      <div class="step-body">
+        <h3>새 프로젝트 생성 → Image-to-Video 선택</h3>
+        <p>[새 영상 만들기] 또는 [Create] 클릭 → 생성 방식에서 <strong>Image to Video</strong>를 선택합니다.<br>
+        Text to Video도 가능하지만, 이미지가 있을 때 훨씬 일관된 결과가 나옵니다.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">3</div>
+      <div class="step-body">
+        <h3>이미지 업로드</h3>
+        <p>[+ Image] 또는 업로드 영역에 STEP 1에서 저장한 Nanobanana 이미지를 드래그하거나 클릭하여 업로드합니다.<br>
+        <strong>권장 해상도:</strong> 1080×1920 (9:16) 또는 1920×1080 (16:9)<br>
+        <strong>파일 형식:</strong> JPG / PNG</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">4</div>
+      <div class="step-body">
+        <h3>프롬프트 입력</h3>
+        <p>텍스트 입력창에 STEP 2에서 완성한 영어 프롬프트를 붙여넣습니다.<br>
+        Veo 3.1은 프롬프트를 매우 정확하게 반영하므로 구체적일수록 좋습니다.</p>
+        <div class="code-block">프롬프트 끝에 항상 추가 권장:<br>"cinematic quality, film grain, 4K, smooth motion"</div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">5</div>
+      <div class="step-body">
+        <h3>영상 설정</h3>
+        <p>생성 전 아래 설정을 확인합니다:</p>
+        <div class="code-block">· 영상 길이: 5초 또는 8초 (숏폼은 5초 추천)<br>· 해상도: 1080p<br>· 종횡비: 9:16 (세로 숏폼) 또는 16:9 (가로)<br>· 오디오: ON (Veo 3.1 자동 음향 활성화)</div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">6</div>
+      <div class="step-body">
+        <h3>[Generate] → 결과 확인 → 저장</h3>
+        <p>생성 클릭 후 <strong>30~90초</strong> 대기합니다. 결과 영상을 미리보기로 확인 후:<br>
+        • 마음에 들면 → <strong>고화질 다운로드 (MP4)</strong><br>
+        • 마음에 들지 않으면 → 프롬프트 일부 수정 후 재시도<br>
+        파일명: <strong>clip_01.mp4, clip_02.mp4...</strong> 형식으로 저장하세요.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">7</div>
+      <div class="step-body">
+        <h3>여러 클립 반복 생성</h3>
+        <p>북 트레일러 완성을 위해 <strong>3~5개 클립</strong>을 목표로 합니다.<br>
+        각 클립은 책의 서로 다른 장면에서 생성하되, 전체적인 색감과 분위기의 일관성을 유지하세요.<br>
+        프롬프트에 동일한 조명/색감 키워드를 반복 사용하면 통일감을 줄 수 있습니다.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tip-box">💡 <span><strong>Veo 3.1 핵심 팁:</strong> 오디오 생성 기능이 탁월합니다. 빗소리, 바람 소리, 종이 넘기는 소리 등이 자동으로 생성됩니다. CapCut에서 이 오디오를 그대로 살려 사용하면 훨씬 몰입감 있는 영상이 완성됩니다.</span></div>
+
+  <div class="guide-nav">
+    <a href="step2.html" class="btn btn-outline">← 이전: ChatGPT</a>
+    <a href="step4.html" class="btn btn-primary">다음 단계: CapCut 편집 →</a>
+  </div>
+</div>
+
+<footer>
+  <strong>北CINEMA</strong> · STEP 3 of 4 — Veo 3.1 AI 영상 생성<br>
+  <span style="opacity:0.5;font-size:0.75rem;">© 2025 Book to AI Video Community</span>
+</footer>
+</body>
+</html>
