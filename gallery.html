@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>갤러리 — 北CINEMA</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #1a1209; --paper: #faf7f2; --cream: #f5f0e8;
+      --gold: #c9a84c; --gold-light: #e8c96a; --muted: #8a7560;
+      --border: #d4c9b8; --card-bg: #fffdf9;
+      --shadow: 0 2px 16px rgba(26,18,9,0.10);
+    }
+    body { font-family: 'Georgia', 'Batang', serif; background: var(--paper); color: var(--ink); line-height: 1.7; }
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(250,247,242,0.96); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 58px; }
+    .nav-logo { font-size: 1.15rem; font-weight: 700; letter-spacing: 2px; color: var(--ink); text-decoration: none; }
+    .nav-logo span { color: var(--gold); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { font-size: 0.82rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--gold); }
+
+    .page-hero { background: var(--cream); border-bottom: 1px solid var(--border); padding: 3rem 2.5rem; text-align: center; }
+    .page-hero .tag { font-size: 0.72rem; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 0.5rem; }
+    .page-hero h1 { font-size: clamp(1.6rem, 3.5vw, 2.6rem); font-weight: 400; color: var(--ink); }
+    .page-hero p { font-size: 0.9rem; color: var(--muted); margin-top: 0.5rem; }
+
+    .gallery-container { max-width: 1140px; margin: 0 auto; padding: 3rem 1.5rem; }
+    .gallery-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+    }
+    .filter-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .filter-btn { padding: 0.4rem 1rem; border-radius: 20px; border: 1px solid var(--border); background: var(--card-bg); font-size: 0.8rem; color: var(--muted); cursor: pointer; transition: all 0.2s; font-family: inherit; }
+    .filter-btn.active, .filter-btn:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .btn-upload { background: var(--gold); color: var(--ink); padding: 0.6rem 1.4rem; border: none; border-radius: 4px; font-size: 0.85rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .btn-upload:hover { background: var(--gold-light); }
+
+    #gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.5rem; }
+    .video-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s; }
+    .video-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(26,18,9,0.13); }
+    .video-thumb { width: 100%; aspect-ratio: 16/9; background: #1a1209; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .video-thumb video, .video-thumb iframe { width: 100%; height: 100%; object-fit: cover; border: none; }
+    .video-thumb-placeholder { color: var(--gold); font-size: 2.5rem; opacity: 0.4; }
+    .video-info { padding: 1rem 1.1rem; }
+    .video-book { font-size: 0.95rem; font-weight: 700; color: var(--ink); }
+    .video-author { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.4rem; }
+    .video-desc { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.6rem; line-height: 1.5; }
+    .video-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem; }
+    .video-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .like-btn { background: none; border: 1px solid var(--border); border-radius: 20px; padding: 0.3rem 0.8rem; font-size: 0.78rem; cursor: pointer; color: var(--muted); display: flex; align-items: center; gap: 0.3rem; transition: all 0.2s; font-family: inherit; }
+    .like-btn:hover, .like-btn.liked { background: #fff0f0; border-color: #e88; color: #c44; }
+    .delete-btn { background: none; border: 1px solid #e8b8b8; border-radius: 20px; padding: 0.3rem 0.8rem; font-size: 0.75rem; cursor: pointer; color: #c44; transition: all 0.2s; font-family: inherit; }
+    .delete-btn:hover { background: #ffe8e8; border-color: #c44; }
+    .video-uploader { font-size: 0.75rem; color: var(--muted); }
+
+    .loading { text-align: center; padding: 4rem; color: var(--muted); font-size: 0.9rem; }
+    .empty-state { text-align: center; padding: 5rem 2rem; color: var(--muted); }
+    .empty-state .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-state p { margin-bottom: 1.5rem; }
+
+    /* MODAL */
+    .modal-overlay { display: none; position: fixed; inset: 0; z-index: 500; background: rgba(26,18,9,0.7); align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--card-bg); border-radius: 14px; padding: 2rem; max-width: 520px; width: 90%; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 8px 40px rgba(0,0,0,0.3); }
+    .modal-close { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--muted); }
+    .modal h3 { font-size: 1.1rem; margin-bottom: 1.2rem; color: var(--ink); }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.9rem; background: var(--paper); color: var(--ink); outline: none; transition: border-color 0.2s; }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--gold); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-submit { width: 100%; background: var(--ink); color: var(--paper); border: none; border-radius: 6px; padding: 0.8rem; font-size: 0.9rem; cursor: pointer; font-family: inherit; transition: background 0.2s; margin-top: 0.5rem; }
+    .form-submit:hover { background: var(--gold); color: var(--ink); }
+
+    footer { background: var(--ink); color: rgba(250,247,242,0.55); text-align: center; padding: 2rem 1.5rem; font-size: 0.8rem; }
+    footer strong { color: var(--gold); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">北<span>CINEMA</span></a>
+  <ul class="nav-links">
+    <li><a href="guide/step1.html">AI 영상 만들기</a></li>
+    <li><a href="gallery.html" class="active">갤러리</a></li>
+    <li><a href="community.html">커뮤니티</a></li>
+  </ul>
+</nav>
+
+<div class="page-hero">
+  <span class="tag">Gallery</span>
+  <h1>🎬 작품 갤러리</h1>
+  <p>Book to AI Video 커뮤니티의 모든 북 트레일러를 감상하세요</p>
+</div>
+
+<div class="gallery-container">
+  <div class="gallery-toolbar">
+    <div class="filter-group">
+      <button class="filter-btn active" onclick="filterGallery('all', this)">전체</button>
+      <button class="filter-btn" onclick="filterGallery('소설', this)">소설</button>
+      <button class="filter-btn" onclick="filterGallery('시', this)">시</button>
+      <button class="filter-btn" onclick="filterGallery('에세이', this)">에세이</button>
+      <button class="filter-btn" onclick="filterGallery('고전', this)">고전</button>
+    </div>
+    <button class="btn-upload" onclick="openUploadModal()">＋ 내 작품 올리기</button>
+  </div>
+  <div id="gallery-grid"><div class="loading">⏳ 불러오는 중...</div></div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" id="upload-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeUploadModal()">✕</button>
+    <h3>🎬 내 작품 올리기</h3>
+    <div class="form-group"><label>책 제목 *</label><input type="text" id="f-book" placeholder="ex) 채식주의자"></div>
+    <div class="form-group"><label>저자 *</label><input type="text" id="f-author" placeholder="ex) 한강"></div>
+    <div class="form-group"><label>작품 설명</label><textarea id="f-desc" placeholder="어떤 장면을 영상으로 만들었나요?"></textarea></div>
+    <div class="form-group">
+      <label>영상 종류</label>
+      <select id="f-type" onchange="toggleVideoInput()">
+        <option value="youtube">YouTube 링크</option>
+        <option value="cloudinary">직접 업로드 URL</option>
+      </select>
+    </div>
+    <div class="form-group" id="yt-group"><label>YouTube 영상 ID</label><input type="text" id="f-ytid" placeholder="ex) dQw4w9WgXcQ"></div>
+    <div class="form-group" id="url-group" style="display:none;"><label>영상 URL</label><input type="text" id="f-url" placeholder="https://..."></div>
+    <div class="form-group">
+      <label>장르</label>
+      <select id="f-genre">
+        <option value="소설">소설</option><option value="시">시</option>
+        <option value="에세이">에세이</option><option value="고전">고전</option><option value="기타">기타</option>
+      </select>
+    </div>
+    <div class="form-group"><label>닉네임</label><input type="text" id="f-uploader" placeholder="ex) 책읽는고양이"></div>
+    <button class="form-submit" onclick="submitVideo()">업로드하기</button>
+  </div>
+</div>
+
+<footer>
+  <strong>北CINEMA</strong> · 작품 갤러리<br>
+  <span style="opacity:0.5;font-size:0.75rem;">© 2025 Book to AI Video Community</span>
+</footer>
+
+<script>
+  const { createClient } = supabase;
+  const sb = createClient('YOUR_SUPABASE_URL', 'YOUR_SUPABASE_ANON_KEY');
+  const SESSION_ID = localStorage.getItem('bc_sid') || (() => { const id = 'u_' + Math.random().toString(36).substr(2,9); localStorage.setItem('bc_sid', id); return id; })();
+
+  let allVideos = [];
+  let currentFilter = 'all';
+
+  async function loadVideos() {
+    const { data, error } = await sb.from('videos').select('*').order('created_at', { ascending: false });
+    if (error) { console.error(error); return; }
+    allVideos = data || [];
+    renderGallery();
+  }
+
+  function renderGallery() {
+    const grid = document.getElementById('gallery-grid');
+    const filtered = currentFilter === 'all' ? allVideos : allVideos.filter(v => v.genre === currentFilter);
+    if (!filtered.length) {
+      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🎞️</div><p>아직 작품이 없어요.</p><button class="btn-upload" onclick="openUploadModal()">첫 번째 작품 올리기</button></div>';
+      return;
+    }
+    grid.innerHTML = filtered.map(v => videoCard(v)).join('');
+  }
+
+  function videoCard(v) {
+    const liked = (v.liked_by||[]).includes(SESSION_ID);
+    const thumb = v.type === 'youtube' && v.yt_id
+      ? `<iframe src="https://www.youtube.com/embed/${v.yt_id}?mute=1&rel=0" allowfullscreen></iframe>`
+      : v.url
+        ? `<video src="${v.url}" muted loop playsinline onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0"></video>`
+        : `<div class="video-thumb-placeholder">🎬</div>`;
+    return `
+    <div class="video-card" id="vc-${v.id}">
+      <div class="video-thumb">${thumb}</div>
+      <div class="video-info">
+        <div class="video-book">${v.book||'무제'}</div>
+        <div class="video-author">${v.author ? '저. '+v.author : ''}</div>
+        ${v.description ? `<div class="video-desc">${v.description}</div>` : ''}
+        <div class="video-meta">
+          <div class="video-actions">
+            <button class="like-btn ${liked?'liked':''}" onclick="toggleLike('${v.id}', this)">
+              ${liked?'❤️':'🤍'} ${v.likes||0}
+            </button>
+            <button class="delete-btn" onclick="deleteVideo('${v.id}')">🗑️ 삭제</button>
+          </div>
+          <span class="video-uploader">@${v.uploader||'익명'}</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function filterGallery(genre, btn) {
+    currentFilter = genre;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderGallery();
+  }
+
+  async function toggleLike(id, btn) {
+    const video = allVideos.find(v => v.id == id);
+    if (!video) return;
+    const liked = (video.liked_by||[]).includes(SESSION_ID);
+    const newLikedBy = liked ? video.liked_by.filter(u => u !== SESSION_ID) : [...(video.liked_by||[]), SESSION_ID];
+    const { error } = await sb.from('videos').update({ likes: newLikedBy.length, liked_by: newLikedBy }).eq('id', id);
+    if (!error) { video.likes = newLikedBy.length; video.liked_by = newLikedBy; renderGallery(); }
+  }
+
+  async function deleteVideo(id) {
+    if (!confirm('이 작품을 삭제하시겠습니까?')) return;
+    const { error } = await sb.from('videos').delete().eq('id', id);
+    if (error) { alert('삭제 실패: ' + error.message); return; }
+    alert('삭제되었습니다.');
+    loadVideos();
+  }
+
+  function openUploadModal() { document.getElementById('upload-modal').classList.add('open'); }
+  function closeUploadModal() { document.getElementById('upload-modal').classList.remove('open'); }
+  function toggleVideoInput() {
+    const t = document.getElementById('f-type').value;
+    document.getElementById('yt-group').style.display = t==='youtube'?'block':'none';
+    document.getElementById('url-group').style.display = t==='cloudinary'?'block':'none';
+  }
+
+  async function submitVideo() {
+    const book = document.getElementById('f-book').value.trim();
+    const author = document.getElementById('f-author').value.trim();
+    if (!book) { alert('책 제목을 입력해주세요.'); return; }
+    const type = document.getElementById('f-type').value;
+    const payload = {
+      book, author,
+      description: document.getElementById('f-desc').value.trim(),
+      type,
+      genre: document.getElementById('f-genre').value,
+      uploader: document.getElementById('f-uploader').value.trim() || '익명',
+      likes: 0, liked_by: []
+    };
+    if (type === 'youtube') payload.yt_id = document.getElementById('f-ytid').value.trim();
+    else payload.url = document.getElementById('f-url').value.trim();
+    const { error } = await sb.from('videos').insert([payload]);
+    if (error) { alert('업로드 실패: ' + error.message); return; }
+    alert('업로드 완료! 🎉');
+    closeUploadModal();
+    loadVideos();
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  });
+
+  loadVideos();
+</script>
+</body>
+</html>
