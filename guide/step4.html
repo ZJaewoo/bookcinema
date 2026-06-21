@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>STEP 4 · CapCut — 北CINEMA</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #1a1209; --paper: #faf7f2; --cream: #f5f0e8;
+      --gold: #c9a84c; --gold-light: #e8c96a; --muted: #8a7560;
+      --border: #d4c9b8; --card-bg: #fffdf9;
+      --shadow: 0 2px 16px rgba(26,18,9,0.10);
+    }
+    body { font-family: 'Georgia', 'Batang', serif; background: var(--paper); color: var(--ink); line-height: 1.7; }
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(250,247,242,0.96); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 2.5rem; height: 58px; }
+    .nav-logo { font-size: 1.15rem; font-weight: 700; letter-spacing: 2px; color: var(--ink); text-decoration: none; }
+    .nav-logo span { color: var(--gold); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { font-size: 0.82rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--gold); }
+    .step-progress { background: var(--cream); border-bottom: 1px solid var(--border); padding: 1rem 2.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .sp-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: var(--muted); text-decoration: none; padding: 0.3rem 0.6rem; border-radius: 4px; transition: color 0.2s; }
+    .sp-item:hover { color: var(--gold); }
+    .sp-item.active { color: var(--ink); font-weight: 700; }
+    .sp-item .sp-num { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 700; background: var(--border); color: var(--muted); }
+    .sp-item.active .sp-num { background: var(--gold); color: #fff; }
+    .sp-item.done .sp-num { background: var(--ink); color: var(--gold); }
+    .sp-arrow { color: var(--border); font-size: 0.9rem; }
+    .guide-hero { background: linear-gradient(120deg, #1a0a2e 0%, #2d1b4e 50%, #3d1a3a 100%); color: var(--paper); padding: 4rem 2.5rem 3rem; text-align: center; }
+    .guide-hero .step-tag { font-size: 0.72rem; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 0.8rem; display: block; }
+    .guide-hero h1 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 400; margin-bottom: 0.8rem; }
+    .guide-hero h1 em { color: var(--gold); font-style: italic; }
+    .guide-hero p { color: rgba(250,247,242,0.7); font-size: 0.95rem; max-width: 480px; margin: 0 auto 2rem; }
+    .hero-icon { font-size: 4rem; margin-bottom: 1rem; display: block; }
+    .site-btn { display: inline-flex; align-items: center; gap: 0.5rem; background: var(--gold); color: var(--ink); padding: 0.7rem 1.6rem; border-radius: 4px; font-size: 0.88rem; font-weight: 700; text-decoration: none; transition: background 0.2s; }
+    .site-btn:hover { background: var(--gold-light); }
+    .guide-content { max-width: 820px; margin: 0 auto; padding: 3.5rem 1.5rem; }
+    .overview-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem 2rem; margin-bottom: 2.5rem; box-shadow: var(--shadow); }
+    .overview-box h2 { font-size: 1rem; color: var(--ink); margin-bottom: 0.8rem; }
+    .overview-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .overview-list li { font-size: 0.88rem; color: var(--muted); display: flex; gap: 0.6rem; align-items: flex-start; }
+    .overview-list li::before { content: '✓'; color: var(--gold); font-weight: 700; flex-shrink: 0; }
+    .steps-list { display: flex; flex-direction: column; gap: 1.5rem; }
+    .step-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; display: flex; overflow: hidden; box-shadow: var(--shadow); }
+    .step-num-col { width: 64px; flex-shrink: 0; background: var(--ink); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 700; }
+    .step-body { padding: 1.4rem 1.6rem; flex: 1; }
+    .step-body h3 { font-size: 0.98rem; color: var(--ink); margin-bottom: 0.4rem; }
+    .step-body p { font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
+    .step-body .code-block { margin-top: 0.7rem; background: #1e1610; color: #e8c96a; border-radius: 6px; padding: 0.7rem 1rem; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.5; }
+    .tip-box { background: #fff8e8; border: 1px solid #e8d090; border-radius: 8px; padding: 1rem 1.3rem; margin-top: 2rem; font-size: 0.85rem; color: #7a5c1e; display: flex; gap: 0.6rem; }
+    /* 완료 배너 */
+    .complete-banner {
+      background: linear-gradient(120deg, var(--ink), #3d2b1f);
+      color: var(--paper); border-radius: 12px; padding: 2.5rem 2rem;
+      text-align: center; margin-top: 2.5rem;
+    }
+    .complete-banner h2 { font-size: 1.4rem; color: var(--gold); margin-bottom: 0.6rem; }
+    .complete-banner p { font-size: 0.9rem; color: rgba(250,247,242,0.75); margin-bottom: 1.5rem; }
+    .complete-btns { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.5rem; font-size: 0.85rem; letter-spacing: 0.5px; border-radius: 4px; cursor: pointer; transition: all 0.2s; text-decoration: none; border: none; font-family: inherit; }
+    .btn-gold { background: var(--gold); color: var(--ink); font-weight: 700; }
+    .btn-gold:hover { background: var(--gold-light); }
+    .btn-outline-light { background: transparent; color: var(--paper); border: 1px solid rgba(255,255,255,0.3); }
+    .btn-outline-light:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-primary { background: var(--ink); color: var(--paper); }
+    .btn-primary:hover { background: var(--gold); color: var(--ink); }
+    .btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+    .guide-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 1rem; }
+    footer { background: var(--ink); color: rgba(250,247,242,0.55); text-align: center; padding: 2rem 1.5rem; font-size: 0.8rem; }
+    footer strong { color: var(--gold); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="../index.html">北<span>CINEMA</span></a>
+  <ul class="nav-links">
+    <li><a href="step1.html">AI 영상 만들기</a></li>
+    <li><a href="../gallery.html">갤러리</a></li>
+    <li><a href="../community.html">커뮤니티</a></li>
+  </ul>
+</nav>
+
+<div class="step-progress">
+  <a href="step1.html" class="sp-item done"><span class="sp-num">✓</span> Nanobanana</a>
+  <span class="sp-arrow">›</span>
+  <a href="step2.html" class="sp-item done"><span class="sp-num">✓</span> ChatGPT</a>
+  <span class="sp-arrow">›</span>
+  <a href="step3.html" class="sp-item done"><span class="sp-num">✓</span> Veo 3.1</a>
+  <span class="sp-arrow">›</span>
+  <a href="step4.html" class="sp-item active"><span class="sp-num">4</span> CapCut</a>
+</div>
+
+<div class="guide-hero">
+  <span class="step-tag">STEP 4 of 4 · 최종 편집 완성</span>
+  <span class="hero-icon">✂️</span>
+  <h1><em>CapCut</em>으로<br>숏폼 북 트레일러 완성</h1>
+  <p>생성된 AI 클립을 하나로 이어붙이고<br>자막·음악·색보정으로 완성도를 높입니다.</p>
+  <a href="https://www.capcut.com" target="_blank" class="site-btn">🔗 CapCut 바로가기</a>
+</div>
+
+<div class="guide-content">
+  <div class="overview-box">
+    <h2>📋 이 단계에서 할 일</h2>
+    <ul class="overview-list">
+      <li>CapCut에서 새 프로젝트를 만듭니다</li>
+      <li>Veo 3.1 클립을 타임라인에 순서대로 배치합니다</li>
+      <li>트랜지션, 자막, 음악, 색보정을 순서대로 적용합니다</li>
+      <li>1080p로 내보내기 후 北CINEMA에 업로드합니다</li>
+    </ul>
+  </div>
+
+  <div class="steps-list">
+
+    <div class="step-card">
+      <div class="step-num-col">1</div>
+      <div class="step-body">
+        <h3>새 프로젝트 생성 및 비율 설정</h3>
+        <p>CapCut 앱(모바일) 또는 웹 버전 실행 → [새 프로젝트] 클릭.<br>
+        비율 설정: <strong>9:16 (세로 숏폼)</strong> 또는 <strong>16:9 (가로)</strong> 선택.<br>
+        영상 길이 목표: <strong>30~60초</strong></p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">2</div>
+      <div class="step-body">
+        <h3>클립 가져오기 및 타임라인 배치</h3>
+        <p>[미디어 추가] → Veo 3.1에서 저장한 MP4 클립들을 선택합니다.<br>
+        스토리 흐름에 맞게 드래그로 순서를 배치하세요.<br>
+        <strong>오프닝 → 전개 → 클라이맥스 → 엔딩</strong> 구조를 추천합니다.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">3</div>
+      <div class="step-body">
+        <h3>트랜지션 추가</h3>
+        <p>클립 사이 [+] 버튼 클릭 → 트랜지션 패널 → <strong>Fade</strong> 또는 <strong>Dissolve</strong> 선택.<br>
+        지속 시간: <strong>0.4~0.6초</strong> 권장.<br>
+        전환이 자연스러울수록 영상의 완성도가 높아집니다.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">4</div>
+      <div class="step-body">
+        <h3>책 원문 자막 추가</h3>
+        <p>[텍스트] 메뉴 → [자막 추가] → 책의 핵심 문장을 입력합니다.<br>
+        폰트: <strong>나눔명조 / 본명조</strong> 등 세리프 계열 권장.<br>
+        애니메이션: <strong>Fade In</strong> 적용, 글자 크기는 화면의 5~7% 정도로 설정합니다.<br>
+        마지막 장면에 <strong>책 제목 + 저자</strong> 크레딧을 추가하세요.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">5</div>
+      <div class="step-body">
+        <h3>배경음악 추가</h3>
+        <p>[오디오] → [음악] → CapCut 내장 저작권 프리 음원 선택.<br>
+        장르: <strong>Classical / Ambient / Cinematic</strong> 권장.<br>
+        Veo 3.1 자동 생성 오디오(빗소리 등)가 있으면 그것을 메인으로 유지하고 음악은 낮은 볼륨으로 깔아주세요.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">6</div>
+      <div class="step-body">
+        <h3>색보정 적용</h3>
+        <p>[필터] → <strong>Cinematic</strong> 또는 <strong>Moody</strong> 필터 선택.<br>
+        강도: <strong>40~60%</strong>로 설정해 원본을 해치지 않게 적용합니다.<br>
+        [조절] 메뉴에서 대비(Contrast) +10, 색온도(Warmth) -5 정도 미세 조정도 효과적입니다.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">7</div>
+      <div class="step-body">
+        <h3>볼륨 밸런스 및 페이드</h3>
+        <p>배경음악 볼륨: <strong>25~35%</strong>로 낮춥니다.<br>
+        첫 클립 시작: <strong>페이드 인 (0.5초)</strong><br>
+        마지막 클립 끝: <strong>페이드 아웃 (1~1.5초)</strong><br>
+        오디오도 끝부분에서 서서히 줄어드는 페이드 아웃 적용.</p>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num-col">8</div>
+      <div class="step-body">
+        <h3>최종 내보내기</h3>
+        <p>[내보내기] 클릭 → 설정 확인:<br></p>
+        <div class="code-block">· 해상도: 1080p<br>· 프레임 레이트: 30fps (또는 24fps — 영화 느낌)<br>· 형식: MP4<br>· 용량 확인 후 저장</div>
+        <p style="margin-top:0.7rem;">저장 완료 후 <strong>北CINEMA 갤러리</strong>에 업로드하세요!</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="tip-box">💡 <span><strong>팁:</strong> CapCut의 [자동 자막] 기능을 사용하면 AI가 오디오를 분석해 자막을 자동 생성합니다. 책 낭독 음성을 넣고 자동 자막을 활용하면 훨씬 풍부한 영상이 됩니다.</span></div>
+
+  <!-- 완료 배너 -->
+  <div class="complete-banner">
+    <h2>🎉 북 트레일러 완성!</h2>
+    <p>4단계를 모두 마쳤습니다. 이제 완성된 영상을 北CINEMA 갤러리에 공유하세요!</p>
+    <div class="complete-btns">
+      <a href="../gallery.html" class="btn btn-gold">🎬 갤러리에 업로드하기</a>
+      <a href="step1.html" class="btn btn-outline-light">↩ 처음부터 다시 만들기</a>
+    </div>
+  </div>
+
+  <div class="guide-nav">
+    <a href="step3.html" class="btn btn-outline">← 이전: Veo 3.1</a>
+    <a href="../gallery.html" class="btn btn-primary">갤러리에 업로드하기 →</a>
+  </div>
+</div>
+
+<footer>
+  <strong>北CINEMA</strong> · STEP 4 of 4 — CapCut 편집 완성<br>
+  <span style="opacity:0.5;font-size:0.75rem;">© 2025 Book to AI Video Community</span>
+</footer>
+</body>
+</html>
